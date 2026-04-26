@@ -1,12 +1,20 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 import { useLogStore } from '@/lib/store';
 import AlertList from '@/components/soc/alert-list';
 import { Bell, ShieldAlert } from 'lucide-react';
 
 export default function AlertsPage() {
   const { logs } = useLogStore();
-  const scans = logs;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const scans = mounted ? logs : [];
 
   const criticalCount = scans.filter((s) => s.severity === 'Critical').length;
   const highCount = scans.filter((s) => s.severity === 'High').length;

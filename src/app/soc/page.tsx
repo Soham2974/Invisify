@@ -40,7 +40,7 @@ export default function SOCDashboardPage() {
     return () => clearInterval(id);
   }, []);
 
-  const scans = logs;
+  const scans = mounted ? logs : [];
   const activityEvents = useMemo(() => deriveActivityEvents(scans, 24), [scans]);
   const latestScan = scans[0];
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useLogStore } from '@/lib/store';
 import ScanHistoryTable from '@/components/soc/scan-history-table';
 import type { Severity, ContentType } from '@/lib/types';
@@ -11,7 +11,14 @@ import { useToast } from '@/hooks/use-toast';
 export default function HistoryPage() {
   const { logs, clearLogs } = useLogStore();
   const { toast } = useToast();
-  const scans = logs;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  // Wait until mounted to use the actual logs, avoiding hydration mismatches
+  const scans = mounted ? logs : [];
 
   const [severityFilter, setSeverityFilter] = useState<Severity | 'ALL'>('ALL');
   const [typeFilter, setTypeFilter] = useState<ContentType | 'ALL'>('ALL');
