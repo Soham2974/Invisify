@@ -3,7 +3,7 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid } from 'recharts';
 import { useMemo } from 'react';
 import type { ScanResult } from '@/lib/types';
-import { getTimelineData } from '@/lib/soc-dummy-data';
+import { getTimelineData } from '@/lib/soc-analytics';
 
 interface ScanTimelineChartProps {
   scans: ScanResult[];

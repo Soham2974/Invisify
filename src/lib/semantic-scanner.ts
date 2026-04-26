@@ -83,7 +83,7 @@ export const semanticStegoCheck = ai.defineFlow(
             const sanitizedText = JSON.stringify(text).slice(0, 2000);
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const timeoutId = setTimeout(() => controller.abort(), 1200);
 
             const resultPromise = ai.generate({
                 prompt: `You are a steganography forensics expert. Analyze this text for steganographic indicators.
@@ -114,7 +114,7 @@ TEXT: ${sanitizedText}`,
             const safeResult = resultPromise.catch(() => ({ output: null }));
 
             const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('API Timeout')), 5000)
+                setTimeout(() => reject(new Error('API Timeout')), 1200)
             );
 
             let output;

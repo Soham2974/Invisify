@@ -1,17 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { useLogStore } from '@/lib/store';
-import { DUMMY_SCANS, ACTIVITY_EVENTS } from '@/lib/soc-dummy-data';
+import { deriveActivityEvents } from '@/lib/soc-analytics';
 import ThreatOverview from '@/components/soc/threat-overview';
 import RiskGauge from '@/components/soc/risk-gauge';
-import DetectionBreakdownChart from '@/components/soc/detection-breakdown-chart';
-import ScanTimelineChart from '@/components/soc/scan-timeline-chart';
-import LiveActivityFeed from '@/components/soc/live-activity-feed';
 import ScanHistoryTable from '@/components/soc/scan-history-table';
 import SeverityBadge from '@/components/soc/severity-badge';
 import { Activity, Shield, Zap, Clock, Radio, ArrowRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+
+const DetectionBreakdownChart = dynamic(
+  () => import('@/components/soc/detection-breakdown-chart'),
+  { ssr: false }
+);
+const ScanTimelineChart = dynamic(
+  () => import('@/components/soc/scan-timeline-chart'),
+  { ssr: false }
+);
+const LiveActivityFeed = dynamic(
+  () => import('@/components/soc/live-activity-feed'),
+  { ssr: false }
+);
 
 export default function SOCDashboardPage() {
   const { logs } = useLogStore();
@@ -29,7 +40,8 @@ export default function SOCDashboardPage() {
     return () => clearInterval(id);
   }, []);
 
-  const scans = [...logs, ...DUMMY_SCANS];
+  const scans = logs;
+  const activityEvents = useMemo(() => deriveActivityEvents(scans, 24), [scans]);
   const latestScan = scans[0];
 
   return (
@@ -187,7 +199,7 @@ export default function SOCDashboardPage() {
               </div>
             </div>
             <div className="p-3 h-[300px] overflow-hidden">
-              <LiveActivityFeed events={ACTIVITY_EVENTS} maxVisible={6} />
+              <LiveActivityFeed events={activityEvents} maxVisible={6} />
             </div>
           </div>
         </div>

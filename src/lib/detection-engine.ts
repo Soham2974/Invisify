@@ -53,6 +53,8 @@ export class DetectionEngine {
         const pValues: number[] = []; // For Fisher's Combined Probability Test
         let detectorsTriggered = 0;
         let detectorsTotal = 0;
+        let imageStrongSignals = 0;
+        let imageHardEvidence = 0;
 
         if (media_type === 'Text' || media_type === 'Emoji') {
             // ==========================================
@@ -219,7 +221,7 @@ export class DetectionEngine {
             // ==========================================
             // TIER 3: AI Semantic Scanner (Gemini)
             // ==========================================
-            if (text_in.length > 50 && (score > 5 || unicode.EMOJI_REGEX.test(text_in))) {
+            if (text_in.length > 80 && (score > 25 || textResults.emoji_threats?.suspicious)) {
                 detectorsTotal++;
                 try {
                     const aiResult = await semanticStegoCheck(text_in);
@@ -249,30 +251,36 @@ export class DetectionEngine {
 
             // --- Chi-Square Test ---
             detectorsTotal++;
-            if (stego?.chiSquareProbability > 0.95) {
+            if (stego?.chiSquareProbability > 0.985) {
                 detectorsTriggered++;
-                score += 35;
+                imageStrongSignals++;
+                score += 16;
                 reasons.push('chi_square_anomaly_detected');
                 pValues.push(1 - stego.chiSquareProbability);
-            } else if (stego?.chiSquareProbability > 0.7) {
+            } else if (stego?.chiSquareProbability > 0.95) {
                 detectorsTriggered++;
-                score += Math.floor((stego.chiSquareProbability - 0.7) * 60);
+                imageStrongSignals++;
+                score += 8;
                 reasons.push('chi_square_elevated');
                 pValues.push(1 - stego.chiSquareProbability);
+            } else if (stego?.chiSquareProbability > 0.90) {
+                score += 2;
+                pValues.push(0.2);
             } else {
                 pValues.push(0.80);
             }
 
             // --- RS Analysis ---
             detectorsTotal++;
-            if (stego?.rsEmbeddingRate > 0.1) {
+            if (stego?.rsEmbeddingRate > 0.2) {
                 detectorsTriggered++;
-                score += 25;
+                imageStrongSignals++;
+                score += 14;
                 reasons.push(`rs_embedding_detected (rate=${stego.rsEmbeddingRate.toFixed(3)})`);
                 pValues.push(Math.max(0.001, 0.5 - stego.rsEmbeddingRate));
-            } else if (stego?.rsEmbeddingRate > 0.01) {
+            } else if (stego?.rsEmbeddingRate > 0.12) {
                 detectorsTriggered++;
-                score += 10;
+                score += 5;
                 reasons.push(`rs_embedding_low (rate=${stego.rsEmbeddingRate.toFixed(3)})`);
                 pValues.push(0.1);
             } else {
@@ -281,14 +289,15 @@ export class DetectionEngine {
 
             // --- Sample Pair Analysis ---
             detectorsTotal++;
-            if (stego?.spaEmbeddingRate > 0.15) {
+            if (stego?.spaEmbeddingRate > 0.22) {
                 detectorsTriggered++;
-                score += 25;
+                imageStrongSignals++;
+                score += 14;
                 reasons.push(`spa_embedding_detected (rate=${stego.spaEmbeddingRate.toFixed(3)})`);
                 pValues.push(Math.max(0.001, 0.5 - stego.spaEmbeddingRate));
-            } else if (stego?.spaEmbeddingRate > 0.02) {
+            } else if (stego?.spaEmbeddingRate > 0.15) {
                 detectorsTriggered++;
-                score += 10;
+                score += 5;
                 pValues.push(0.1);
             } else {
                 pValues.push(0.85);
@@ -298,7 +307,8 @@ export class DetectionEngine {
             detectorsTotal++;
             if (stego?.bitCycleAnomaly?.detected) {
                 detectorsTriggered++;
-                score += 15;
+                imageStrongSignals++;
+                score += 6;
                 reasons.push(`periodic_lsb_pattern (period=${stego.bitCycleAnomaly.periodicity})`);
                 pValues.push(0.01);
             } else {
@@ -309,7 +319,7 @@ export class DetectionEngine {
             detectorsTotal++;
             if (stego?.noiseFingerprint?.suspicious) {
                 detectorsTriggered++;
-                score += 10;
+                score += 4;
                 reasons.push('noise_floor_inconsistency_detected');
                 pValues.push(0.03);
             } else {
@@ -320,8 +330,23 @@ export class DetectionEngine {
             detectorsTotal++;
             if (veritas?.trailingDataDetected) {
                 detectorsTriggered++;
-                score += 20;
+                imageStrongSignals++;
+                imageHardEvidence++;
+                score += 32;
                 reasons.push(`trailing_data_detected (${veritas.trailingDataSize} bytes)`);
+                pValues.push(0.005);
+            } else {
+                pValues.push(0.90);
+            }
+
+            // --- Metadata Tool Signatures ---
+            detectorsTotal++;
+            if ((veritas?.metadataAnomalies?.length || 0) > 0) {
+                detectorsTriggered++;
+                imageStrongSignals++;
+                imageHardEvidence++;
+                score += 20;
+                reasons.push('metadata_anomaly_markers_found');
                 pValues.push(0.005);
             } else {
                 pValues.push(0.90);
@@ -331,7 +356,8 @@ export class DetectionEngine {
             detectorsTotal++;
             if (veritas?.channelInconsistency?.detected) {
                 detectorsTriggered++;
-                score += 15;
+                imageStrongSignals++;
+                score += 7;
                 reasons.push('rgb_channel_inconsistency');
                 pValues.push(0.02);
             } else {
@@ -342,7 +368,7 @@ export class DetectionEngine {
             detectorsTotal++;
             if (veritas?.bitPlaneAnomaly) {
                 detectorsTriggered++;
-                score += 10;
+                score += 4;
                 reasons.push('bit_plane_correlation_anomaly');
                 pValues.push(0.03);
             } else {
@@ -353,7 +379,9 @@ export class DetectionEngine {
             detectorsTotal++;
             if (veritas?.shadowChunks?.detected) {
                 detectorsTriggered++;
-                score += 20;
+                imageStrongSignals++;
+                imageHardEvidence++;
+                score += 24;
                 reasons.push(`shadow_chunks_detected (${veritas.shadowChunks.chunks.join(', ')})`);
                 pValues.push(0.005);
             } else {
@@ -364,7 +392,8 @@ export class DetectionEngine {
             detectorsTotal++;
             if (veritas?.dctAnomaly?.detected) {
                 detectorsTriggered++;
-                score += 25;
+                imageStrongSignals++;
+                score += 12;
                 reasons.push(`jpeg_dct_anomaly (benford_dev=${veritas.dctAnomaly.benfordDeviation.toFixed(3)})`);
                 pValues.push(veritas.dctAnomaly.pValue);
             } else {
@@ -373,11 +402,11 @@ export class DetectionEngine {
 
             // --- Fisher's Combined Image Ensemble ---
             const imagePValues = pValues.filter(p => p < 0.5);
-            if (imagePValues.length >= 3) {
+            if (imagePValues.length >= 4 && (imageHardEvidence > 0 || imageStrongSignals >= 3)) {
                 const fisherStat = this.fisherCombinedTest(imagePValues);
                 findings.fisher_ensemble = { statistic: fisherStat.statistic, pValue: fisherStat.pValue, k: imagePValues.length };
-                if (fisherStat.pValue < 0.01) {
-                    score += 15; // Multi-detector confirmation bonus
+                if (fisherStat.pValue < 0.001) {
+                    score += 8;
                     reasons.push('fisher_ensemble_confirmed');
                 }
             }
@@ -386,7 +415,20 @@ export class DetectionEngine {
         // ==========================================
         // FINAL SCORING
         // ==========================================
-        const finalScore = Math.min(100, Math.max(0, score));
+        let adjustedScore = score;
+
+        // Conservative image gating: weak, single-signal statistical noise should not escalate severity.
+        if (media_type === 'Image') {
+            if (imageHardEvidence === 0 && imageStrongSignals < 2) {
+                adjustedScore = Math.min(adjustedScore, 20);
+            } else if (imageHardEvidence === 0 && imageStrongSignals === 2) {
+                adjustedScore = Math.min(adjustedScore, 45);
+            } else if (imageHardEvidence === 0 && imageStrongSignals === 3) {
+                adjustedScore = Math.min(adjustedScore, 59);
+            }
+        }
+
+        const finalScore = Math.min(100, Math.max(0, adjustedScore));
 
         // Check for verified payloads
         const verifiedPayloads: string[] = [];
@@ -423,6 +465,10 @@ export class DetectionEngine {
             confidence: fisherConfidence,
             findings: {
                 ...findings,
+                image_signal_summary: media_type === 'Image' ? {
+                    strong_signals: imageStrongSignals,
+                    hard_evidence: imageHardEvidence,
+                } : undefined,
                 verified_payloads: verifiedPayloads.length > 0 ? verifiedPayloads : undefined,
                 ensemble_confidence: fisherConfidence,
                 detectors_triggered: detectorsTriggered,

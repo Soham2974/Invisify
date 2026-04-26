@@ -127,7 +127,7 @@ export function analyzeBitCycle(pixelData: number[] | Uint8Array): { detected: b
     for (let i = 0; i < correlations.length; i++) {
         if (correlations[i] > maxCorr) { maxCorr = correlations[i]; period = i + 1; }
     }
-    return { detected: maxCorr > 0.65, periodicity: period };
+    return { detected: maxCorr > 0.72, periodicity: period };
 }
 
 export function analyzeNoiseFingerprint(pixelData: number[] | Uint8Array): { suspicious: boolean; varianceSpread: number } {
@@ -143,7 +143,7 @@ export function analyzeNoiseFingerprint(pixelData: number[] | Uint8Array): { sus
     }
     const max = Math.max(...variances), min = Math.min(...variances);
     const spread = max - min;
-    return { suspicious: spread > 0.15 && max > 0.2, varianceSpread: spread };
+    return { suspicious: spread > 0.22 && max > 0.25, varianceSpread: spread };
 }
 
 export function analyzeStego(pixelData: number[] | Uint8Array): StegoAnalysisResult {
@@ -153,12 +153,17 @@ export function analyzeStego(pixelData: number[] | Uint8Array): StegoAnalysisRes
     const bitCycle = analyzeBitCycle(pixelData);
     const noisePrint = analyzeNoiseFingerprint(pixelData);
     const reasons: string[] = [];
-    if (prob > 0.85) reasons.push('chi_square_anomaly_detected');
-    if (rate_spa > 0.15) reasons.push('lsb_embedding_detected (spa)');
-    if (rate_rs > 0.15) reasons.push('lsb_embedding_detected (rs)');
+    if (prob > 0.95) reasons.push('chi_square_anomaly_detected');
+    if (rate_spa > 0.2) reasons.push('lsb_embedding_detected (spa)');
+    if (rate_rs > 0.2) reasons.push('lsb_embedding_detected (rs)');
     if (bitCycle.detected) reasons.push(`periodic_lsb_pattern_detected (period: ${bitCycle.periodicity})`);
     if (noisePrint.suspicious) reasons.push('noise_floor_inconsistency_detected');
 
-    const isSuspicious = (prob > 0.95) || (rate_rs > 0.12) || (rate_spa > 0.15 && prob > 0.5) || (rate_rs > 0.05 && rate_spa > 0.05) || bitCycle.detected || noisePrint.suspicious;
+    const isSuspicious = (prob > 0.985) ||
+        (rate_rs > 0.2) ||
+        (rate_spa > 0.22 && prob > 0.8) ||
+        (rate_rs > 0.12 && rate_spa > 0.12) ||
+        bitCycle.detected ||
+        noisePrint.suspicious;
     return { suspicious: isSuspicious, chiSquareProbability: prob, spaEmbeddingRate: rate_spa, rsEmbeddingRate: rate_rs, bitCycleAnomaly: bitCycle, noiseFingerprint: noisePrint, reasons };
 }

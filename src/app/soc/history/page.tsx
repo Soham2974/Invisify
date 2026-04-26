@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import { useLogStore } from '@/lib/store';
-import { DUMMY_SCANS } from '@/lib/soc-dummy-data';
 import ScanHistoryTable from '@/components/soc/scan-history-table';
 import type { Severity, ContentType } from '@/lib/types';
 import { History, Download, Trash2, Filter, Database } from 'lucide-react';
@@ -12,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function HistoryPage() {
   const { logs, clearLogs } = useLogStore();
   const { toast } = useToast();
-  const scans = [...logs, ...DUMMY_SCANS];
+  const scans = logs;
 
   const [severityFilter, setSeverityFilter] = useState<Severity | 'ALL'>('ALL');
   const [typeFilter, setTypeFilter] = useState<ContentType | 'ALL'>('ALL');

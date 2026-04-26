@@ -1,25 +1,38 @@
 import { POST, OPTIONS } from '../src/app/api/scan/route';
 import { NextRequest } from 'next/server';
 
-// Mock the DetectionEngine to avoid real AI model calls during unit tests
-jest.mock('../src/lib/detection-engine', () => {
+jest.mock('../src/lib/scan-service', () => {
     return {
-        DetectionEngine: {
-            analyze: jest.fn().mockImplementation((text, imageBuf, pixels, mimeType) => {
-                if (text && text.includes('\u200B')) {
-                    return Promise.resolve({
-                        score: 30,
-                        severity: 'Suspicious',
-                        reasons: ['zero_width_characters_detected'],
-                    });
-                }
+        ALLOWED_IMAGE_TYPES: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp'],
+        MAX_IMAGE_SIZE: 10 * 1024 * 1024,
+        performScan: jest.fn().mockImplementation(({ text }) => {
+            if (text && text.includes('\u200B')) {
                 return Promise.resolve({
-                    score: 0,
-                    severity: 'Safe',
-                    reasons: [],
+                    id: 'scan-1',
+                    timestamp: new Date().toISOString(),
+                    type: 'Text',
+                    content_type: 'Text',
+                    score: 30,
+                    confidence: 0.8,
+                    summary: 'Suspicious text',
+                    severity: 'Medium',
+                    findings: '{}',
+                    reasons: ['zero_width_characters_detected'],
                 });
-            }),
-        },
+            }
+            return Promise.resolve({
+                id: 'scan-2',
+                timestamp: new Date().toISOString(),
+                type: 'Text',
+                content_type: 'Text',
+                score: 0,
+                confidence: 0.5,
+                summary: 'Safe text',
+                severity: 'Safe',
+                findings: '{}',
+                reasons: [],
+            });
+        }),
     };
 });
 

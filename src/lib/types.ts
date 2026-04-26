@@ -7,10 +7,16 @@ export type ScanResult = {
   content_type: ContentType;
   severity: Severity;
   score: number;
+  confidence?: number;
   summary: string;
   findings: string;
   reasons: string[];
   isFalsePositive?: boolean;
+};
+
+export type ScanApiResponse = ScanResult & {
+  type: ContentType;
+  confidence: number;
 };
 
 export interface EmojiSecurityConfig {
@@ -128,4 +134,3 @@ export interface StegoVeritasResult {
   };
   reasons: string[];
 }
-

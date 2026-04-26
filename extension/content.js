@@ -1,4 +1,4 @@
-
+﻿
 /**
  * Sentinel Prime: Email Guard - Research-Grade Content Script
  * Advanced steganography detection with client-side fallback and ML UI
@@ -12,9 +12,10 @@
  * - Threat score meter UI
  */
 
-console.log('🛡️ Sentinel Prime: Research-Grade Email Guard Active');
+console.log('ðŸ›¡ï¸ Sentinel Prime: Research-Grade Email Guard Active');
 
 const SCAN_API_URL = 'http://localhost:3000/api/scan';
+const EXTENSION_EVENTS_API_URL = 'http://localhost:3000/api/extension-events';
 
 const escapeHTML = (str) => {
     if (typeof str !== 'string') return '';
@@ -114,11 +115,11 @@ function detectZeroWidth(text) {
  */
 function detectHomoglyphText(text) {
     const homoglyphs = {
-        'а': 'a', 'с': 'c', 'е': 'e', 'о': 'o', 'р': 'p', 'х': 'x', 'у': 'y',
-        'і': 'i', 'ј': 'j', 'ѕ': 's', 'ѵ': 'v', 'һ': 'h', 'ԁ': 'd',
-        'А': 'A', 'В': 'B', 'С': 'C', 'Е': 'E', 'Н': 'H', 'І': 'I',
-        'К': 'K', 'М': 'M', 'О': 'O', 'Р': 'P', 'Т': 'T', 'Х': 'X',
-        'ο': 'o', 'ν': 'v', 'κ': 'k', 'α': 'a', 'ε': 'e', 'ι': 'i',
+        'Ð°': 'a', 'Ñ': 'c', 'Ðµ': 'e', 'Ð¾': 'o', 'Ñ€': 'p', 'Ñ…': 'x', 'Ñƒ': 'y',
+        'Ñ–': 'i', 'Ñ˜': 'j', 'Ñ•': 's', 'Ñµ': 'v', 'Ò»': 'h', 'Ô': 'd',
+        'Ð': 'A', 'Ð’': 'B', 'Ð¡': 'C', 'Ð•': 'E', 'Ð': 'H', 'Ð†': 'I',
+        'Ðš': 'K', 'Ðœ': 'M', 'Ðž': 'O', 'Ð ': 'P', 'Ð¢': 'T', 'Ð¥': 'X',
+        'Î¿': 'o', 'Î½': 'v', 'Îº': 'k', 'Î±': 'a', 'Îµ': 'e', 'Î¹': 'i',
     };
     const found = [];
     for (const char of text) {
@@ -348,8 +349,8 @@ function showThreatScoreMeter(result, isLocal = false) {
 
     meter.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="font-weight: bold; font-size: 16px;">🛡️ Threat Analysis</span>
-            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #9ca3af;">×</button>
+            <span style="font-weight: bold; font-size: 16px;">ðŸ›¡ï¸ Threat Analysis</span>
+            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #9ca3af;">Ã—</button>
         </div>
         
         <div style="margin-bottom: 16px;">
@@ -365,7 +366,7 @@ function showThreatScoreMeter(result, isLocal = false) {
         <div style="margin-bottom: 12px;">
             <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #6b7280;">Detection Method</div>
             <div style="font-size: 13px; background: ${isLocal ? '#fef3c7' : '#dbeafe'}; padding: 6px 10px; border-radius: 6px;">
-                ${isLocal ? '⚡ Local Forensics' : '🌐 API + Local'}
+                ${isLocal ? 'âš¡ Local Forensics' : 'ðŸŒ API + Local'}
             </div>
         </div>
         
@@ -380,7 +381,7 @@ function showThreatScoreMeter(result, isLocal = false) {
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
             <div style="font-size: 11px; color: #6b7280;">
                 Entropy: <strong>${result.entropy.toFixed(2)}</strong> bits/char
-                ${result.entropy > 5.5 ? '⚠️' : '✓'}
+                ${result.entropy > 5.5 ? 'âš ï¸' : 'âœ“'}
             </div>
         </div>
         ` : ''}
@@ -426,15 +427,58 @@ async function scanContent(text, images = []) {
         }
         clearTimeout(timeoutId);
         if (!response.ok) {
-            console.warn('🛡️ Sentinel API returned:', response.status);
-            return null; // Return null instead of throwing — callers handle fallback
+            console.warn('ðŸ›¡ï¸ Sentinel API returned:', response.status);
+            return null; // Return null instead of throwing â€” callers handle fallback
         }
         return await response.json();
     } catch (error) {
         clearTimeout(timeoutId);
-        // Don't use console.error — Chrome logs these as extension errors
-        console.warn('🛡️ Sentinel: API unreachable, switching to local forensics.', error.name);
-        return null; // Return null — callers will fallback to local scanning
+        // Don't use console.error â€” Chrome logs these as extension errors
+        console.warn('ðŸ›¡ï¸ Sentinel: API unreachable, switching to local forensics.', error.name);
+        return null; // Return null â€” callers will fallback to local scanning
+    }
+}
+
+function getThreatTypeFromReasons(reasons = []) {
+    const joined = reasons.join(' ').toLowerCase();
+    if (joined.includes('homoglyph') || joined.includes('link')) return 'Homoglyph Phishing';
+    if (joined.includes('zero_width') || joined.includes('zero-width')) return 'Zero-width Payload';
+    if (joined.includes('emoji')) return 'Emoji Stego';
+    if (joined.includes('bidi')) return 'BIDI Attack';
+    if (joined.includes('image') || joined.includes('lsb') || joined.includes('jpeg') || joined.includes('png')) return 'Image LSB Anomaly';
+    if (joined.includes('prompt')) return 'Prompt Injection';
+    return reasons.length > 0 ? reasons[0] : 'None';
+}
+
+function getActionFromResult(result) {
+    const severity = String(result.severity || 'Safe');
+    const score = Number(result.score || 0);
+    if (severity === 'Critical' || severity === 'High' || score >= 75) return 'blocked';
+    if (severity === 'Medium' || score >= 40) return 'warned';
+    return 'allowed';
+}
+
+function getInboundContext(emailBody) {
+    const subject =
+        document.querySelector('h2.hP')?.innerText?.trim() ||
+        document.querySelector('[data-thread-perm-id] h2')?.innerText?.trim() ||
+        'Unknown Subject';
+    const sender =
+        document.querySelector('span[email]')?.getAttribute('email') ||
+        document.querySelector('span.gD')?.getAttribute('email') ||
+        'unknown@sender';
+    return { subject, sender };
+}
+
+async function publishExtensionEvent(payload) {
+    try {
+        await fetch(EXTENSION_EVENTS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch {
+        // Best-effort telemetry only
     }
 }
 
@@ -494,22 +538,33 @@ async function scanInboundEmail(emailBody) {
 
     const text = emailBody.innerText;
     const images = await extractImagesFromContainer(emailBody);
-    
+
     if (!text && images.length === 0) return;
     if (text && text.length < 20 && images.length === 0) return;
 
-    console.log(`🛡️ Sentinel Prime: Scanning inbound email... (Text: ${text.length} chars, Images: ${images.length})`);
+    console.log(`[Sentinel] Scanning inbound email... (Text: ${text.length} chars, Images: ${images.length})`);
 
-    // Try API first, fallback to local
     const result = await scanContent(text, images);
+    const context = getInboundContext(emailBody);
+
     if (result) {
-        // API succeeded — check result
         if (result.severity === 'Critical' || result.severity === 'High' || ((result.severity === 'Medium' || result.severity === 'Low') && result.score > 60)) {
             injectInboundWarning(emailBody, result, false);
         }
+
+        publishExtensionEvent({
+            timestamp: new Date().toISOString(),
+            emailSubject: context.subject,
+            sender: context.sender,
+            threatType: getThreatTypeFromReasons(result.reasons || []),
+            score: Number(result.score || 0),
+            severity: result.severity || 'Safe',
+            action: getActionFromResult(result),
+            fingerprint: fingerprint.slice(0, 16),
+            source: 'inbound',
+        });
     } else {
-        // API unavailable — use local forensics
-        console.log('🛡️ API unavailable, using local forensics');
+        console.log('[Sentinel] API unavailable, using local forensics');
         const localResult = localForensicScan(text);
         if (localResult.score > 50) {
             injectInboundWarning(emailBody, {
@@ -518,6 +573,18 @@ async function scanInboundEmail(emailBody) {
                 reasons: localResult.reasons.length > 0 ? localResult.reasons : localResult.threats
             }, true);
         }
+
+        publishExtensionEvent({
+            timestamp: new Date().toISOString(),
+            emailSubject: context.subject,
+            sender: context.sender,
+            threatType: getThreatTypeFromReasons(localResult.reasons || localResult.threats || []),
+            score: Number(localResult.score || 0),
+            severity: localResult.severity || 'Safe',
+            action: getActionFromResult(localResult),
+            fingerprint: fingerprint.slice(0, 16),
+            source: 'inbound',
+        });
     }
 }
 
@@ -548,7 +615,7 @@ function injectInboundWarning(emailBody, result, isLocal) {
     const infoDiv = document.createElement('div');
     infoDiv.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 4px;">
-            <span>${isHighRisk ? '🚨 SECURITY ALERT' : '⚠️ SECURITY WARNING'}</span>
+            <span>${isHighRisk ? 'ðŸš¨ SECURITY ALERT' : 'âš ï¸ SECURITY WARNING'}</span>
             ${isLocal ? '<span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 3px;">LOCAL</span>' : ''}
         </div>
         <div style="font-size: 14px;">
@@ -617,7 +684,7 @@ emailObserver.observe(document.body, { childList: true, subtree: true });
 
 // Initial scan
 setTimeout(() => {
-    console.log('🛡️ Sentinel Prime: Initial scan...');
+    console.log('ðŸ›¡ï¸ Sentinel Prime: Initial scan...');
     getAllEmailBodies().forEach(scanInboundEmail);
 }, 4000);
 
@@ -678,15 +745,27 @@ async function performSendScan(composeWindow) {
     if (!text && images.length === 0) return { allow: true };
 
     injectToast(`Performing Security Scan (Images: ${images.length})...`);
+    const outboundFingerprint = await sha256((text || '').slice(0, 500) + `:${images.length}`);
 
-    // Try API first, fallback to local
     const result = await scanContent(text, images);
     if (result) {
         showThreatScoreMeter(result, false);
 
+        publishExtensionEvent({
+            timestamp: new Date().toISOString(),
+            emailSubject: 'Outbound Compose',
+            sender: 'local-user',
+            threatType: getThreatTypeFromReasons(result.reasons || []),
+            score: Number(result.score || 0),
+            severity: result.severity || 'Safe',
+            action: getActionFromResult(result),
+            fingerprint: outboundFingerprint.slice(0, 16),
+            source: 'outbound',
+        });
+
         if (result.severity === 'Critical' || result.severity === 'High') {
             injectToast('CRITICAL: Send blocked!', 'danger');
-            alert('🚨 SENTINEL PRIME: High-risk content detected!\n\n' + escapeHTML(result.reasons?.join('\n') || ''));
+            alert('[SENTINEL PRIME] High-risk content detected!\n\n' + escapeHTML(result.reasons?.join('\n') || ''));
             return { allow: false, result };
         } else if ((result.severity === 'Medium' || result.severity === 'Low') && result.score > 50) {
             injectToast(`Warning: Suspicious (${result.score}%)`, 'warning');
@@ -696,15 +775,26 @@ async function performSendScan(composeWindow) {
             return { allow: true, result };
         }
     } else {
-        // API unavailable — use local forensics
-        console.log('🛡️ API unavailable, using local forensics');
+        console.log('[Sentinel] API unavailable, using local forensics');
         const localResult = localForensicScan(text);
         localResult.threats = localResult.threats.length > 0 ? localResult.threats : ['Clean'];
         showThreatScoreMeter(localResult, true);
 
+        publishExtensionEvent({
+            timestamp: new Date().toISOString(),
+            emailSubject: 'Outbound Compose',
+            sender: 'local-user',
+            threatType: getThreatTypeFromReasons(localResult.reasons || localResult.threats || []),
+            score: Number(localResult.score || 0),
+            severity: localResult.severity || 'Safe',
+            action: getActionFromResult(localResult),
+            fingerprint: outboundFingerprint.slice(0, 16),
+            source: 'outbound',
+        });
+
         if (localResult.score > 70) {
             injectToast('CRITICAL: Send blocked (Local)', 'danger');
-            alert('🚨 SENTINEL PRIME (Local Mode): High-risk content!\n\n' + localResult.threats.join('\n'));
+            alert('[SENTINEL PRIME - Local Mode] High-risk content!\n\n' + localResult.threats.join('\n'));
             return { allow: false, result: localResult };
         } else if (localResult.score > 40) {
             injectToast(`Warning: Suspicious (${localResult.score}%, Local)`, 'warning');
@@ -772,4 +862,7 @@ document.addEventListener('keydown', async (e) => {
     }
 }, true);
 
-console.log('✅ Sentinel Prime: Research-grade protection active');
+console.log('âœ… Sentinel Prime: Research-grade protection active');
+
+
+

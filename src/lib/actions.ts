@@ -1,22 +1,11 @@
 'use server';
 
-import sharp from 'sharp';
-import { randomUUID } from 'crypto';
-import { summarizeFindings } from '@/ai/flows/summarize-findings';
 import { generateSampleText as generateSampleTextFlow } from '@/ai/flows/generate-sample-text';
 import { suggestWhitelist as suggestWhitelistFlow } from '@/ai/flows/suggest-whitelist';
-import type { ContentType, ScanResult, Severity } from './types';
-import * as unicode from './unicode';
+import type { ScanResult } from './types';
 import * as emoji from './emoji';
-import * as codeDetector from './code-detector';
-import * as spellingDetector from './spelling-detector';
-import * as stegDetector from './steg-detector';
-import * as stegoveritasDetector from './stegoveritas-detector';
 import { zeroWidth, Position, SteganographyMode } from './zerowidth';
-import { DetectionEngine } from './detection-engine';
-
-// Helper to simulate a delay
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, performScan } from './scan-service';
 
 // Logic moved to DetectionEngine
 
@@ -26,68 +15,30 @@ export async function analyzeContent(
     formData: FormData
 ): Promise<ScanResult | { error: string }> {
     try {
-        console.log("[analyzeContent] Starting analysis...");
         const text = formData.get('textInput') as string | null;
         const imageFile = formData.get('imageInput') as File | null;
-        console.log(`[analyzeContent] Inputs: textLength=${text?.length || 0}, imageSize=${imageFile?.size || 0}`);
-        const imageBuffer = imageFile && imageFile.size > 0 ? await imageFile.arrayBuffer() : null;
+        const imageBuffer = imageFile && imageFile.size > 0
+            ? await imageFile.arrayBuffer()
+            : null;
 
         if (!text && !imageBuffer) {
             return { error: 'No content provided to analyze.' };
         }
 
-        // MIME type validation
-        const ALLOWED_MIME = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp'];
-        if (imageFile && imageFile.size > 0 && !ALLOWED_MIME.includes(imageFile.type)) {
+        if (imageFile && imageFile.size > 0 && imageFile.size > MAX_IMAGE_SIZE) {
+            return { error: 'Image too large. Maximum 10MB.' };
+        }
+
+        if (imageFile && imageFile.size > 0 && !ALLOWED_IMAGE_TYPES.includes(imageFile.type)) {
             return { error: 'Unsupported image format. Allowed: PNG, JPEG, GIF, WebP, BMP.' };
         }
 
-        let imagePixels: Uint8Array | null = null;
-        if (imageBuffer) {
-            const { data } = await sharp(Buffer.from(imageBuffer))
-                .ensureAlpha() // Force RGBA output to match stegoveritas stride=4
-                .raw()
-                .toBuffer({ resolveWithObject: true });
-            imagePixels = data;
-        }
-        const rawText = text || "";
-        const unescapedText = rawText.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => String.fromCharCode(parseInt(grp, 16)));
-
-        const detection = await DetectionEngine.analyze(
-            unescapedText,
+        const result = await performScan({
+            text: text || '',
             imageBuffer,
-            imagePixels,
-            imageFile?.type
-        );
-        console.log("[analyzeContent] Detection complete:", detection.severity, "Score:", detection.score);
-
-        let summaryText = "AI summarization unavailable.";
-        try {
-            const sumObj = await summarizeFindings({
-                findings: JSON.stringify(detection.findings, null, 2),
-                type: detection.type,
-                severity: detection.severity,
-            });
-            if (sumObj && sumObj.summary) {
-                summaryText = sumObj.summary;
-            }
-        } catch (e: any) {
-            console.error("[analyzeContent] AI summarization failed:", e.message || e);
-        }
-
-        const result: ScanResult = {
-            id: randomUUID(),
-            timestamp: new Date().toISOString(),
-            content_type: detection.type,
-            severity: detection.severity as Severity,
-            score: detection.score,
-            summary: summaryText,
-            findings: JSON.stringify(detection.findings),
-            reasons: detection.reasons
-        };
-
+            mimeType: imageFile?.type || 'text/plain',
+        });
         return result;
-
     } catch (e: any) {
         console.error("An unexpected error occurred in analyzeContent:", e);
         return { error: e.message || 'An unexpected server error occurred during analysis.' };

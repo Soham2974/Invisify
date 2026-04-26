@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import type { Severity } from '@/lib/types';
-import type { ActivityEvent } from '@/lib/soc-dummy-data';
+import type { ActivityEvent } from '@/lib/soc-types';
 import {
   EyeOff,
   Type,

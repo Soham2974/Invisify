@@ -1,13 +1,12 @@
 'use client';
 
 import { useLogStore } from '@/lib/store';
-import { DUMMY_SCANS } from '@/lib/soc-dummy-data';
 import AlertList from '@/components/soc/alert-list';
 import { Bell, ShieldAlert } from 'lucide-react';
 
 export default function AlertsPage() {
   const { logs } = useLogStore();
-  const scans = [...logs, ...DUMMY_SCANS];
+  const scans = logs;
 
   const criticalCount = scans.filter((s) => s.severity === 'Critical').length;
   const highCount = scans.filter((s) => s.severity === 'High').length;

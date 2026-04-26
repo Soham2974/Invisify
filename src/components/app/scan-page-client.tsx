@@ -25,11 +25,12 @@ import {
   Info
 } from 'lucide-react';
 
-import { analyzeContent, generateCodeSample, generateSafeTextSample } from '@/lib/actions';
+import { generateCodeSample } from '@/lib/actions';
 import { useLogStore } from '@/lib/store';
 import { type ScanResult } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { scanViaApi } from '@/lib/scan-client';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -144,11 +145,11 @@ export default function ScanPageClient() {
     setIsLoading(true);
     setResult(null);
 
-    const formData = new FormData();
-    if (data.textInput) formData.append('textInput', data.textInput);
-    if (data.imageInput?.[0]) formData.append('imageInput', data.imageInput[0]);
-
-    const res = await analyzeContent(null, formData);
+    const res = await scanViaApi({
+      text: data.textInput || '',
+      imageFile: data.imageInput?.[0] || null,
+      timeoutMs: 15000,
+    });
 
     if ('error' in res) {
       toast({ variant: 'destructive', title: 'Scan Failed', description: res.error });

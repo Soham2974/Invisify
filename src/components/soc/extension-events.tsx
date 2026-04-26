@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import type { ExtensionEvent } from '@/lib/soc-dummy-data';
+import type { ExtensionEvent } from '@/lib/soc-types';
 import SeverityBadge from './severity-badge';
 import { ShieldCheck, ShieldAlert, ShieldX, Lock } from 'lucide-react';
 

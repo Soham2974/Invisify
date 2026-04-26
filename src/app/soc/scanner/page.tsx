@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { analyzeContent } from '@/lib/actions';
+import { scanViaApi } from '@/lib/scan-client';
 import { useLogStore } from '@/lib/store';
 import type { ScanResult } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -79,17 +79,11 @@ export default function ScannerPage() {
     setIsLoading(true);
     setResult(null);
 
-    const startTime = Date.now();
-    const formData = new FormData();
-    if (data.textInput) formData.append('textInput', data.textInput);
-    if (data.imageInput?.[0]) formData.append('imageInput', data.imageInput[0]);
-
-    const res = await analyzeContent(null, formData);
-
-    const elapsedTime = Date.now() - startTime;
-    if (elapsedTime < 2200) {
-      await new Promise(resolve => setTimeout(resolve, 2200 - elapsedTime));
-    }
+    const res = await scanViaApi({
+      text: data.textInput || '',
+      imageFile: data.imageInput?.[0] || null,
+      timeoutMs: 15000,
+    });
 
     if ('error' in res) {
       toast({ variant: 'destructive', title: 'Scan Failed', description: res.error });

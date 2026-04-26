@@ -3,7 +3,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useMemo } from 'react';
 import type { ScanResult } from '@/lib/types';
-import { getDetectionTypeDistribution } from '@/lib/soc-dummy-data';
+import { getDetectionTypeDistribution } from '@/lib/soc-analytics';
 
 const COLORS = [
   '#10b981', // emerald — zero-width

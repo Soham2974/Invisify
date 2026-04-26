@@ -171,12 +171,13 @@ export function analyzeRGBInconsistency(pixelData: number[] | Uint8Array): { det
 }
 
 export function detectBitPlaneAnomaly(pixelData: number[] | Uint8Array): boolean {
-    if (pixelData.length < 1000) return false;
+    if (pixelData.length < 5000) return false;
     let correlationBit01 = 0;
     const sampleSize = Math.min(pixelData.length, 10000);
     for (let i = 0; i < sampleSize; i++) if ((pixelData[i] & 1) === ((pixelData[i] >> 1) & 1)) correlationBit01++;
     const density = correlationBit01 / sampleSize;
-    return density > 0.48 && density < 0.52;
+    // Random/noisy images naturally cluster around ~0.5; flag only strong deviation.
+    return density < 0.40 || density > 0.60;
 }
 
 /**

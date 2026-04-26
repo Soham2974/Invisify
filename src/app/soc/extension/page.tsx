@@ -1,14 +1,42 @@
 'use client';
 
-import { EXTENSION_EVENTS } from '@/lib/soc-dummy-data';
+import { useEffect, useState } from 'react';
 import ExtensionEventsTable from '@/components/soc/extension-events';
+import type { ExtensionEvent } from '@/lib/soc-types';
 import { Chrome, Wifi, Shield, ShieldCheck, ShieldX, Database, Download } from 'lucide-react';
 
 export default function ExtensionPage() {
-  const events = EXTENSION_EVENTS;
-  const blockedCount = events.filter((e) => e.action === 'blocked').length;
-  const warnedCount = events.filter((e) => e.action === 'warned').length;
-  const allowedCount = events.filter((e) => e.action === 'allowed').length;
+  const [events, setEvents] = useState<ExtensionEvent[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadEvents = async () => {
+      try {
+        const res = await fetch('/api/extension-events?limit=200', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to fetch extension events');
+        const data = await res.json();
+        if (!cancelled) {
+          setEvents(Array.isArray(data.events) ? data.events : []);
+          setIsConnected(true);
+        }
+      } catch {
+        if (!cancelled) setIsConnected(false);
+      }
+    };
+
+    loadEvents();
+    const id = setInterval(loadEvents, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  const blockedCount = events.filter((event) => event.action === 'blocked').length;
+  const warnedCount = events.filter((event) => event.action === 'warned').length;
+  const allowedCount = events.filter((event) => event.action === 'allowed').length;
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -22,8 +50,8 @@ export default function ExtensionPage() {
           <p className="text-xs text-neutral-500 mt-0.5">Gmail scanning events and browser extension status</p>
         </div>
 
-        <a 
-          href="/api/download-extension" 
+        <a
+          href="/api/download-extension"
           download="sentinel-prime-extension.zip"
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-all text-xs font-mono font-bold"
         >
@@ -38,8 +66,8 @@ export default function ExtensionPage() {
             <Wifi size={14} className="text-emerald-400 animate-pulse" />
             <span className="text-[10px] font-mono text-neutral-600 uppercase">Status</span>
           </div>
-          <p className="text-lg font-bold text-emerald-400">Connected</p>
-          <p className="text-[10px] text-neutral-600 font-mono mt-0.5">localhost:3000</p>
+          <p className="text-lg font-bold text-emerald-400">{isConnected ? 'Connected' : 'Disconnected'}</p>
+          <p className="text-[10px] text-neutral-600 font-mono mt-0.5">/api/extension-events</p>
         </div>
         <div className="rounded-2xl border border-rose-500/10 bg-rose-500/[0.03] p-5">
           <div className="flex items-center gap-2 mb-3">
@@ -68,7 +96,7 @@ export default function ExtensionPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <p className="text-[10px] font-mono text-neutral-600 uppercase mb-1">Extension Version</p>
-            <p className="text-sm font-bold text-white">Manifest V3 — v1.2.0</p>
+            <p className="text-sm font-bold text-white">Manifest V3</p>
           </div>
           <div>
             <p className="text-[10px] font-mono text-neutral-600 uppercase mb-1">SHA-256 Cache</p>
