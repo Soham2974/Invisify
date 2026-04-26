@@ -23,6 +23,20 @@ describe('image false-positive hardening', () => {
     expect(result.score).toBeLessThan(35);
   });
 
+  test('rgba input with constant alpha does not produce high severity', async () => {
+    const buffer = tinyPngBuffer();
+    const rgba = new Uint8Array(4 * 4000);
+    for (let i = 0; i < rgba.length; i += 4) {
+      rgba[i] = Math.floor(Math.random() * 256);       // R
+      rgba[i + 1] = Math.floor(Math.random() * 256);   // G
+      rgba[i + 2] = Math.floor(Math.random() * 256);   // B
+      rgba[i + 3] = 255;                               // A (constant)
+    }
+
+    const result = await DetectionEngine.analyze('', buffer, rgba, 'image/png');
+    expect(result.severity === 'Safe' || result.severity === 'Low').toBe(true);
+  });
+
   test('hard evidence can still escalate severity', async () => {
     const clean = new Uint8Array(tinyPngBuffer());
     const withTrailing = new Uint8Array(clean.length + 64);

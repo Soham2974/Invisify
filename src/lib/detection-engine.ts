@@ -332,7 +332,7 @@ export class DetectionEngine {
                 detectorsTriggered++;
                 imageStrongSignals++;
                 imageHardEvidence++;
-                score += 32;
+                score += 38;
                 reasons.push(`trailing_data_detected (${veritas.trailingDataSize} bytes)`);
                 pValues.push(0.005);
             } else {
@@ -419,12 +419,10 @@ export class DetectionEngine {
 
         // Conservative image gating: weak, single-signal statistical noise should not escalate severity.
         if (media_type === 'Image') {
-            if (imageHardEvidence === 0 && imageStrongSignals < 2) {
+            if (imageHardEvidence === 0 && imageStrongSignals < 3) {
                 adjustedScore = Math.min(adjustedScore, 20);
-            } else if (imageHardEvidence === 0 && imageStrongSignals === 2) {
-                adjustedScore = Math.min(adjustedScore, 45);
             } else if (imageHardEvidence === 0 && imageStrongSignals === 3) {
-                adjustedScore = Math.min(adjustedScore, 59);
+                adjustedScore = Math.min(adjustedScore, 34);
             }
         }
 
@@ -653,10 +651,29 @@ export class DetectionEngine {
     }
 
     private static analyzeImage(buffer: ArrayBuffer, pixels: number[] | Uint8Array, mimeType: string) {
+        const stegoPixels = this.extractStegoPixels(pixels);
         return {
-            stego_analysis: analyzeStego(pixels),
+            stego_analysis: analyzeStego(stegoPixels),
             stegoveritas_analysis: stegoveritas.analyzeStegoVeritas(buffer, pixels, mimeType)
         };
+    }
+
+    /**
+     * Remove alpha channel noise from RGBA buffers before LSB statistical tests.
+     * Including alpha (often constant 255) inflates chi-square/RS/SPA false positives.
+     */
+    private static extractStegoPixels(pixels: number[] | Uint8Array): Uint8Array {
+        const input = pixels instanceof Uint8Array ? pixels : Uint8Array.from(pixels);
+        if (input.length % 4 !== 0) return input;
+
+        const rgb = new Uint8Array((input.length / 4) * 3);
+        let out = 0;
+        for (let i = 0; i < input.length; i += 4) {
+            rgb[out++] = input[i];
+            rgb[out++] = input[i + 1];
+            rgb[out++] = input[i + 2];
+        }
+        return rgb;
     }
 
     private static getSeverity(score: number): 'Safe' | 'Low' | 'Medium' | 'High' | 'Critical' {

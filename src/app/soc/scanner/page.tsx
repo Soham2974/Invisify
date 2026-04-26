@@ -43,6 +43,7 @@ export default function ScannerPage() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFileName, setImageFileName] = useState<string>('');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -53,17 +54,20 @@ export default function ScannerPage() {
     const file = e.target.files?.[0];
     if (file) {
       form.setValue('textInput', '');
+      setImageFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     } else {
       setImagePreview(null);
+      setImageFileName('');
     }
   };
 
   const clearImage = () => {
     form.setValue('imageInput', undefined);
     setImagePreview(null);
+    setImageFileName('');
     const el = document.getElementById('soc-imageInput') as HTMLInputElement;
     if (el) el.value = '';
   };
@@ -72,6 +76,7 @@ export default function ScannerPage() {
     form.setValue('textInput', sample);
     form.setValue('imageInput', undefined);
     setImagePreview(null);
+    setImageFileName('');
     toast({ title: 'Sample Loaded', description: 'Forensic payload initialized.' });
   };
 
@@ -116,7 +121,7 @@ export default function ScannerPage() {
           <p className="text-xs text-neutral-500 mt-0.5">Analyze text, images, and emoji for hidden steganographic content</p>
         </div>
         <button
-          onClick={() => { form.reset(); setResult(null); setImagePreview(null); }}
+          onClick={() => { form.reset(); setResult(null); setImagePreview(null); setImageFileName(''); }}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.06] transition-all text-xs font-mono"
         >
           <RefreshCw size={12} /> Reset Session
@@ -216,7 +221,7 @@ export default function ScannerPage() {
                           <RefreshCw size={8} />
                         </button>
                       </div>
-                      <span className="text-[10px] font-mono text-emerald-400">IMAGE_LOADED.bin</span>
+                      <span className="text-[10px] font-mono text-emerald-400">{imageFileName || 'image-uploaded'}</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-neutral-600">

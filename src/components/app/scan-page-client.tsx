@@ -76,6 +76,7 @@ export default function ScanPageClient() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFileName, setImageFileName] = useState<string>('');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -86,6 +87,7 @@ export default function ScanPageClient() {
     const file = e.target.files?.[0];
     if (file) {
       form.setValue('textInput', '');
+      setImageFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -93,6 +95,7 @@ export default function ScanPageClient() {
       reader.readAsDataURL(file);
     } else {
       setImagePreview(null);
+      setImageFileName('');
     }
   };
 
@@ -100,6 +103,7 @@ export default function ScanPageClient() {
     if (value.trim() && imagePreview) {
       form.setValue('imageInput', undefined);
       setImagePreview(null);
+      setImageFileName('');
       const fileInput = document.getElementById('imageInput') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
     }
@@ -108,6 +112,7 @@ export default function ScanPageClient() {
   const clearImage = () => {
     form.setValue('imageInput', undefined);
     setImagePreview(null);
+    setImageFileName('');
     const fileInput = document.getElementById('imageInput') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
   };
@@ -134,6 +139,7 @@ export default function ScanPageClient() {
       form.setValue('textInput', sample);
       form.setValue('imageInput', undefined);
       setImagePreview(null);
+      setImageFileName('');
       toast({ title: 'Sample Loaded', description: `Forensic ${type} sample initialized.` });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to load sample.' });
@@ -190,7 +196,7 @@ export default function ScanPageClient() {
             </h1>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => { form.reset(); setResult(null); setImagePreview(null); }} className="rounded-full bg-white/5 border-white/10 hover:bg-white/10">
+            <Button variant="outline" size="sm" onClick={() => { form.reset(); setResult(null); setImagePreview(null); setImageFileName(''); }} className="rounded-full bg-white/5 border-white/10 hover:bg-white/10">
               <RefreshCw size={14} className="mr-2" /> Reset Session
             </Button>
           </div>
@@ -294,7 +300,7 @@ export default function ScanPageClient() {
                                           <RefreshCw size={10} />
                                         </button>
                                       </div>
-                                      <span className="text-[10px] font-mono text-emerald-400">IMAGE_LOADED.bin</span>
+                                      <span className="text-[10px] font-mono text-emerald-400">{imageFileName || 'image-uploaded'}</span>
                                     </div>
                                   ) : (
                                     <div className="flex flex-col items-center gap-2 text-neutral-500 group-hover:text-neutral-300">

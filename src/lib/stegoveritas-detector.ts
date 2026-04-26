@@ -65,7 +65,7 @@ export function detectMetadataAnomalies(buffer: ArrayBufferLike): string[] {
     const sampleSize = Math.min(bytes.length, 4096);
     // Use TextDecoder instead of String.fromCharCode(...spread) to avoid stack overflow on large arrays
     const headerContent = new TextDecoder('ascii', { fatal: false }).decode(bytes.slice(0, sampleSize));
-    const suspiciousMarkers = [/stegHide/i, /OutGuess/i, /JPHIDE/i, /F5/i];
+    const suspiciousMarkers = [/stegHide/i, /OutGuess/i, /JPHIDE/i, /f5[-_\s]?stego/i, /f5[-_\s]?steganography/i];
     for (const marker of suspiciousMarkers) {
         if (marker.test(headerContent)) anomalies.push(`Known tool signature detected: ${marker.source}`);
     }
@@ -74,7 +74,12 @@ export function detectMetadataAnomalies(buffer: ArrayBufferLike): string[] {
 
 export function detectShadowChunks(buffer: ArrayBufferLike): { detected: boolean; chunks: string[] } {
     const bytes = new Uint8Array(buffer);
-    const standardChunks = new Set(['IHDR', 'PLTE', 'IDAT', 'IEND', 'tRNS', 'cHRM', 'gAMA', 'iCCP', 'sBIT', 'sRGB', 'pHYs', 'sPLT', 'tIME', 'iTXt', 'tEXt', 'zTXt', 'bKGD', 'hIST']);
+    const standardChunks = new Set([
+        'IHDR', 'PLTE', 'IDAT', 'IEND', 'tRNS', 'cHRM', 'gAMA', 'iCCP', 'sBIT',
+        'sRGB', 'pHYs', 'sPLT', 'tIME', 'iTXt', 'tEXt', 'zTXt', 'bKGD', 'hIST',
+        // APNG standard chunks
+        'acTL', 'fcTL', 'fdAT'
+    ]);
     const found: string[] = [];
     let pos = 8;
     while (pos < bytes.length - 8) {
@@ -172,9 +177,11 @@ export function analyzeRGBInconsistency(pixelData: number[] | Uint8Array): { det
 
 export function detectBitPlaneAnomaly(pixelData: number[] | Uint8Array): boolean {
     if (pixelData.length < 5000) return false;
+    const effectiveData = extractNonAlphaBytes(pixelData);
+    if (effectiveData.length < 1000) return false;
     let correlationBit01 = 0;
-    const sampleSize = Math.min(pixelData.length, 10000);
-    for (let i = 0; i < sampleSize; i++) if ((pixelData[i] & 1) === ((pixelData[i] >> 1) & 1)) correlationBit01++;
+    const sampleSize = Math.min(effectiveData.length, 10000);
+    for (let i = 0; i < sampleSize; i++) if ((effectiveData[i] & 1) === ((effectiveData[i] >> 1) & 1)) correlationBit01++;
     const density = correlationBit01 / sampleSize;
     // Random/noisy images naturally cluster around ~0.5; flag only strong deviation.
     return density < 0.40 || density > 0.60;
@@ -235,7 +242,7 @@ export function analyzeJpegDCT(buffer: ArrayBufferLike, mimeType: string): { det
 
     const benfordDeviation = chiSquare;
     // df = 8 (9 categories - 1). Critical value at α=0.05 is 15.507
-    const detected = chiSquare > 15.507;
+    const detected = chiSquare > 25;
     const pValue = detected ? Math.max(0.001, Math.exp(-chiSquare / 4)) : 0.8;
 
     return { detected, benfordDeviation, pValue };
@@ -247,17 +254,18 @@ export function analyzeJpegDCT(buffer: ArrayBufferLike, mimeType: string): { det
  * Stego embedding disrupts local texture consistency.
  */
 export function analyzeGaborResponse(pixelData: number[] | Uint8Array): { detected: boolean; deviation: number } {
-    if (pixelData.length < 4096) return { detected: false, deviation: 0 };
+    const effectiveData = extractNonAlphaBytes(pixelData);
+    if (effectiveData.length < 4096) return { detected: false, deviation: 0 };
 
     const blockSize = 64;
     const energies: number[] = [];
 
     // Compute local texture energy per block (simplified Gabor via gradient magnitude)
-    for (let i = 0; i < pixelData.length - blockSize * 4; i += blockSize * 4) {
+    for (let i = 0; i < effectiveData.length - blockSize; i += blockSize) {
         let energy = 0;
         for (let j = 0; j < blockSize - 1; j++) {
-            const idx = i + j * 4;
-            const diff = Math.abs(pixelData[idx] - pixelData[idx + 4]);
+            const idx = i + j;
+            const diff = Math.abs(effectiveData[idx] - effectiveData[idx + 1]);
             energy += diff * diff;
         }
         energies.push(energy / blockSize);
@@ -274,6 +282,20 @@ export function analyzeGaborResponse(pixelData: number[] | Uint8Array): { detect
     const detected = cv < 0.15 || cv > 1.2;
 
     return { detected, deviation: cv };
+}
+
+function extractNonAlphaBytes(pixelData: number[] | Uint8Array): Uint8Array {
+    const bytes = pixelData instanceof Uint8Array ? pixelData : Uint8Array.from(pixelData);
+    if (bytes.length % 4 !== 0) return bytes;
+
+    const rgb = new Uint8Array((bytes.length / 4) * 3);
+    let out = 0;
+    for (let i = 0; i < bytes.length; i += 4) {
+        rgb[out++] = bytes[i];
+        rgb[out++] = bytes[i + 1];
+        rgb[out++] = bytes[i + 2];
+    }
+    return rgb;
 }
 
 export function analyzeStegoVeritas(buffer: ArrayBufferLike, pixelData: number[] | Uint8Array, mimeType: string): StegoVeritasResult {
