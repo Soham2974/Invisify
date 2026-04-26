@@ -1,190 +1,83 @@
-# Superpowers
+# 🛡️ SENTINEL PRIME (INVISIFY)
 
-Superpowers is a complete software development workflow for your coding agents, built on top of a set of composable "skills" and some initial instructions that make sure your agent uses them.
+Sentinel Prime (branded "INVISIFY") is a powerful forensic steganography detection platform designed to find hidden data concealed inside text, emoji sequences, and images. It operates as an "antivirus for invisible data", scanning content for secret payloads that humans cannot see but computers can exploit.
 
-## How it works
+## 📌 Architecture Overview
 
-It starts from the moment you fire up your coding agent. As soon as it sees that you're building something, it *doesn't* just jump into trying to write code. Instead, it steps back and asks you what you're really trying to do. 
+This project is a full-stack application built around a **Cascade Detection Pipeline** with three delivery surfaces:
 
-Once it's teased a spec out of the conversation, it shows it to you in chunks short enough to actually read and digest. 
+1. **Web App**: Next.js 15 + React 19 + TailwindCSS Dashboard for comprehensive forensic scanning.
+2. **Browser Extension**: Chrome Manifest V3 extension for real-time email protection (e.g., Gmail).
+3. **API Endpoint**: Next.js Route Handler (`/api/scan`) providing a programmatic scanning interface.
 
-After you've signed off on the design, your agent puts together an implementation plan that's clear enough for an enthusiastic junior engineer with poor taste, no judgement, no project context, and an aversion to testing to follow. It emphasizes true red/green TDD, YAGNI (You Aren't Gonna Need It), and DRY. 
+### The Cascade Detection Pipeline
+- **Tier 1 (Deterministic)**: Fast character-set checks (zero-width, BIDI, known tool signatures).
+- **Tier 2 (Statistical)**: Deep structural analysis (Shannon entropy, Markov chains, Chi-Square, RS Analysis).
+- **Tier 3 (Semantic/ML)**: AI-powered semantic analysis via Google Gemini and hooks for ML ensemble validations.
 
-Next up, once you say "go", it launches a *subagent-driven-development* process, having agents work through each engineering task, inspecting and reviewing their work, and continuing forward. It's not uncommon for Claude to be able to work autonomously for a couple hours at a time without deviating from the plan you put together.
+## 🚀 Key Capabilities
 
-There's a bunch more to it, but that's the core of the system. And because the skills trigger automatically, you don't need to do anything special. Your coding agent just has Superpowers.
+### Text & Emoji Forensics
+- **Zero-width Detection**: Spots ZWSP, ZWNJ, ZWJ, BOM, LRM/RLM, etc. Includes brute-force decoding.
+- **Homoglyph Detection**: Identifies over 80 mappings across Cyrillic, Greek, Armenian, and Hebrew scripts.
+- **Emoji Steganalysis**: Analyzes emoji sequences for Nibble steganography, unauthorized Variation Selectors, and decodes custom schemes (like EmojiEncode).
+- **Shannon Entropy & Markov Chains**: Flags text with unnatural entropy (e.g., `> 5.5 bits/char`) indicating obfuscated payloads.
+- **SNOW Detection**: Detects trailing whitespace steganography.
 
+### Image Steganalysis (LSB & Structural)
+- **Chi-Square Attack**: Performs frequency analysis on even/odd pixel pairs to mathematically prove LSB modification.
+- **Sample Pair Analysis (SPA)**: Estimates embedding rates via quadratic equations.
+- **RS Analysis**: Classifies Regular/Singular groups using flip/invert masks.
+- **Structural Analysis**: Detects trailing data after standard EOF markers (PNG IEND, JPEG EOI), non-standard PNG shadow chunks, and tool signatures (StegHide, OutGuess, JPHIDE, F5).
 
-## Sponsorship
+### AI & Semantic Scanning
+- **LLM Engine**: Utilizes Google Gemini 1.5 Flash via Genkit.
+- **Perplexity Scoring**: Identifies machine-generated stegotext by finding semantic anomalies and suspicious syntactical constructions.
 
-If Superpowers has helped you do stuff that makes money and you are so inclined, I'd greatly appreciate it if you'd consider [sponsoring my opensource work](https://github.com/sponsors/obra).
+## 🛠️ Getting Started
 
-Thanks! 
+### Prerequisites
+- Node.js 20+
+- Python 3.11+ (Required if running the ML Microservice)
+- Optional: Firebase account (if using Firestore) and Google Gemini API Key
 
-- Jesse
+### Node.js Frontend & API Setup
 
+1. Install Node.js dependencies:
+   ```bash
+   npm install
+   ```
 
-## Installation
+2. Configure environment variables by creating a `.env.local` file with the required keys (e.g., Google API Key for Genkit).
 
-**Note:** Installation differs by platform. Claude Code or Cursor have built-in plugin marketplaces. Codex and OpenCode require manual setup.
+3. Start the Next.js development server:
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:3000`.
 
-### Claude Code Official Marketplace
+### ML Microservice Setup (Python Backend)
 
-Superpowers is available via the [official Claude plugin marketplace](https://claude.com/plugins/superpowers)
+A Python microservice handles the heavy deep learning detection components like SRNet and DistilBERT.
 
-Install the plugin from Claude marketplace:
+1. Ensure Python 3.11+ is installed.
+2. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Run the microservice server:
+   ```bash
+   uvicorn main:app --host 0.0.0.0 --port 8000
+   ```
 
-```bash
-/plugin install superpowers@claude-plugins-official
-```
+## ⚠️ Known Limitations & Future Improvements
 
-### Claude Code (via Plugin Marketplace)
+To make this project production-ready, several limitations must be addressed:
+- **Image Decoding Pipeline**: Avoid relying on raw file bytes. Integrate `sharp` or Canvas API for robust pixel extraction.
+- **API Security**: Implement authentication (JWT/API Keys), rate limiting, and restrict CORS specifically to trusted domains.
+- **Prompt Injection Defense**: Ensure proper sanitization of user text inputs before submitting to the Gemini AI Semantic analyzer.
+- **Advanced Machine Learning Integration**: Replace simple threshold simulations with a dedicated, isolated Python ML microservice using PyTorch/TensorFlow (e.g., SRNet for images, DistilBERT for text).
+- **Extension Hardening**: Remove `innerHTML` usage in the Chrome extension and migrate to robust DOM manipulation to prevent XSS vulnerabilities.
 
-In Claude Code, register the marketplace first:
-
-```bash
-/plugin marketplace add obra/superpowers-marketplace
-```
-
-Then install the plugin from this marketplace:
-
-```bash
-/plugin install superpowers@superpowers-marketplace
-```
-
-### Cursor (via Plugin Marketplace)
-
-In Cursor Agent chat, install from marketplace:
-
-```text
-/add-plugin superpowers
-```
-
-or search for "superpowers" in the plugin marketplace.
-
-### Codex
-
-Tell Codex:
-
-```
-Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md
-```
-
-**Detailed docs:** [docs/README.codex.md](docs/README.codex.md)
-
-### OpenCode
-
-Tell OpenCode:
-
-```
-Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.opencode/INSTALL.md
-```
-
-**Detailed docs:** [docs/README.opencode.md](docs/README.opencode.md)
-
-### GitHub Copilot CLI
-
-```bash
-copilot plugin marketplace add obra/superpowers-marketplace
-copilot plugin install superpowers@superpowers-marketplace
-```
-
-### Gemini CLI
-
-```bash
-gemini extensions install https://github.com/obra/superpowers
-```
-
-To update:
-
-```bash
-gemini extensions update superpowers
-```
-
-### Verify Installation
-
-Start a new session in your chosen platform and ask for something that should trigger a skill (for example, "help me plan this feature" or "let's debug this issue"). The agent should automatically invoke the relevant superpowers skill.
-
-## The Basic Workflow
-
-1. **brainstorming** - Activates before writing code. Refines rough ideas through questions, explores alternatives, presents design in sections for validation. Saves design document.
-
-2. **using-git-worktrees** - Activates after design approval. Creates isolated workspace on new branch, runs project setup, verifies clean test baseline.
-
-3. **writing-plans** - Activates with approved design. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps.
-
-4. **subagent-driven-development** or **executing-plans** - Activates with plan. Dispatches fresh subagent per task with two-stage review (spec compliance, then code quality), or executes in batches with human checkpoints.
-
-5. **test-driven-development** - Activates during implementation. Enforces RED-GREEN-REFACTOR: write failing test, watch it fail, write minimal code, watch it pass, commit. Deletes code written before tests.
-
-6. **requesting-code-review** - Activates between tasks. Reviews against plan, reports issues by severity. Critical issues block progress.
-
-7. **finishing-a-development-branch** - Activates when tasks complete. Verifies tests, presents options (merge/PR/keep/discard), cleans up worktree.
-
-**The agent checks for relevant skills before any task.** Mandatory workflows, not suggestions.
-
-## What's Inside
-
-### Skills Library
-
-**Testing**
-- **test-driven-development** - RED-GREEN-REFACTOR cycle (includes testing anti-patterns reference)
-
-**Debugging**
-- **systematic-debugging** - 4-phase root cause process (includes root-cause-tracing, defense-in-depth, condition-based-waiting techniques)
-- **verification-before-completion** - Ensure it's actually fixed
-
-**Collaboration** 
-- **brainstorming** - Socratic design refinement
-- **writing-plans** - Detailed implementation plans
-- **executing-plans** - Batch execution with checkpoints
-- **dispatching-parallel-agents** - Concurrent subagent workflows
-- **requesting-code-review** - Pre-review checklist
-- **receiving-code-review** - Responding to feedback
-- **using-git-worktrees** - Parallel development branches
-- **finishing-a-development-branch** - Merge/PR decision workflow
-- **subagent-driven-development** - Fast iteration with two-stage review (spec compliance, then code quality)
-
-**Meta**
-- **writing-skills** - Create new skills following best practices (includes testing methodology)
-- **using-superpowers** - Introduction to the skills system
-
-## Philosophy
-
-- **Test-Driven Development** - Write tests first, always
-- **Systematic over ad-hoc** - Process over guessing
-- **Complexity reduction** - Simplicity as primary goal
-- **Evidence over claims** - Verify before declaring success
-
-Read more: [Superpowers for Claude Code](https://blog.fsck.com/2025/10/09/superpowers/)
-
-## Contributing
-
-Skills live directly in this repository. To contribute:
-
-1. Fork the repository
-2. Create a branch for your skill
-3. Follow the `writing-skills` skill for creating and testing new skills
-4. Submit a PR
-
-See `skills/writing-skills/SKILL.md` for the complete guide.
-
-## Updating
-
-Skills update automatically when you update the plugin:
-
-```bash
-/plugin update superpowers
-```
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Community
-
-Superpowers is built by [Jesse Vincent](https://blog.fsck.com) and the rest of the folks at [Prime Radiant](https://primeradiant.com).
-
-- **Discord**: [Join us](https://discord.gg/35wsABTejz) for community support, questions, and sharing what you're building with Superpowers
-- **Issues**: https://github.com/obra/superpowers/issues
-- **Release announcements**: [Sign up](https://primeradiant.com/superpowers/) to get notified about new versions
+## 🤝 Contributing
+Contributions are welcome. Please ensure your changes pass existing unit tests and follow the architectural guidelines set forth in the platform modules.
