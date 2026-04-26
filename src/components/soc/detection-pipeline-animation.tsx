@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Hourglass, CheckCircle2 } from 'lucide-react';
 
@@ -14,30 +14,55 @@ const STAGES = [
   'SCORING'
 ];
 
+// Each stage is held for this many ms while scanning is active
+const STAGE_DURATION_MS = Math.floor(12000 / STAGES.length); // spread ~12 s across stages
+
 interface Props {
   isScanning: boolean;
 }
 
 export default function DetectionPipelineAnimation({ isScanning }: Props) {
   const [activeStage, setActiveStage] = useState(0);
+  // Hold the interval id in a ref so the callback always has the up-to-date id
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (isScanning) {
+      // Reset to the start every time a new scan begins
       setActiveStage(0);
-      
-      const interval = setInterval(() => {
+
+      // Clear any leftover timer
+      if (timerRef.current !== null) {
+        clearInterval(timerRef.current);
+      }
+
+      timerRef.current = setInterval(() => {
         setActiveStage((prev) => {
-          if (prev >= STAGES.length) {
-            clearInterval(interval);
+          // Stop one stage before the last so the final stage only lights up
+          // after the engine returns (i.e. when isScanning becomes false).
+          if (prev >= STAGES.length - 1) {
+            if (timerRef.current !== null) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
             return prev;
           }
           return prev + 1;
         });
-      }, 300);
+      }, STAGE_DURATION_MS);
 
-      return () => clearInterval(interval);
+      return () => {
+        if (timerRef.current !== null) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      };
     } else {
-      // Fast-forward to completion when not scanning (e.g. when results are shown)
+      // Scan finished — advance to fully completed state
+      if (timerRef.current !== null) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       setActiveStage(STAGES.length);
     }
   }, [isScanning]);
@@ -55,7 +80,7 @@ export default function DetectionPipelineAnimation({ isScanning }: Props) {
         {/* Progress Line */}
         <div 
           className="absolute top-4 left-[5%] h-[2px] bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)] transition-all duration-300 ease-linear"
-          style={{ width: `${(progress * 0.9)}%` }} // Adjust for the 5% padding on both sides
+          style={{ width: `${progress * 0.9}%` }}
         />
 
         <div className="flex justify-between relative z-10">
@@ -68,15 +93,17 @@ export default function DetectionPipelineAnimation({ isScanning }: Props) {
                 <div 
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 bg-[#0d1117]",
-                    isCompleted ? "border-emerald-500 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]" :
-                    isActive ? "border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] animate-pulse" :
-                    "border-white/10 text-neutral-600"
+                    isCompleted
+                      ? "border-emerald-500 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                      : isActive
+                      ? "border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] animate-pulse"
+                      : "border-white/10 text-neutral-600"
                   )}
                 >
                   {isCompleted ? (
                     <CheckCircle2 size={14} />
                   ) : (
-                    <Hourglass size={14} className={cn(isActive && "animate-[spin_3s_linear_infinite]")} />
+                    <Hourglass size={14} className={cn(isActive && 'animate-[spin_3s_linear_infinite]')} />
                   )}
                 </div>
                 <span 

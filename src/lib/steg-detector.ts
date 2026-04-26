@@ -69,9 +69,12 @@ export function samplePairAnalysis(pixelData: number[] | Uint8Array): number {
     if (discriminant < 0) return 0;
     const p1 = (-b + Math.sqrt(discriminant)) / (2 * a);
     const p2 = (-b - Math.sqrt(discriminant)) / (2 * a);
-    const results = [p1, p2].filter(v => v > 0 && v <= 1);
+    // Allow up to 1.0. High values are normal for heavily embedded images.
+    const results = [p1, p2].filter(v => v > 0 && v <= 1.0);
     const p = results.length > 0 ? Math.min(...results) : 0;
-    if ((r0 + s0) < (r1 + s1) * 0.05) return 0;
+    // Homogeneity check: If the image has very few varying adjacent pixels
+    // (e.g. screenshots, flat graphics), the quadratic model is unstable.
+    if ((r0 + s0) < (r1 + s1) * 0.15) return 0;
     return p;
 }
 
@@ -104,10 +107,12 @@ export function rsAnalysis(pixelData: number[] | Uint8Array): number {
     const n = Math.floor(pixelData.length / groupSize);
     const d0 = (Rm - Sm) / n;
     const d1 = (R_m - S_m) / n;
-    if (Rm + Sm > n * 0.9 && Math.abs(d0 - d1) < 0.05) return 0;
+    // Homogeneity check for RS: discard if groups are almost all uniform.
+    if (Rm + Sm > n * 0.8 || (Rm + Sm) < n * 0.05) return 0;
+    if (Math.abs(d0 - d1) < 0.05 && (Rm + Sm > n * 0.8)) return 0;
     const z = d1 - d0;
     if (Math.abs(z) < 0.0001) return 0;
-    return Math.max(0, Math.min(1, Math.abs(d0 / z)));
+    return Math.max(0, Math.min(1.0, Math.abs(d0 / z)));
 }
 
 export function analyzeBitCycle(pixelData: number[] | Uint8Array): { detected: boolean; periodicity: number } {
@@ -127,7 +132,7 @@ export function analyzeBitCycle(pixelData: number[] | Uint8Array): { detected: b
     for (let i = 0; i < correlations.length; i++) {
         if (correlations[i] > maxCorr) { maxCorr = correlations[i]; period = i + 1; }
     }
-    return { detected: maxCorr > 0.72, periodicity: period };
+    return { detected: maxCorr > 0.78, periodicity: period };
 }
 
 export function analyzeNoiseFingerprint(pixelData: number[] | Uint8Array): { suspicious: boolean; varianceSpread: number } {
@@ -143,7 +148,7 @@ export function analyzeNoiseFingerprint(pixelData: number[] | Uint8Array): { sus
     }
     const max = Math.max(...variances), min = Math.min(...variances);
     const spread = max - min;
-    return { suspicious: spread > 0.22 && max > 0.25, varianceSpread: spread };
+    return { suspicious: spread > 0.26 && max > 0.25, varianceSpread: spread };
 }
 
 export function analyzeStego(pixelData: number[] | Uint8Array): StegoAnalysisResult {
@@ -159,11 +164,16 @@ export function analyzeStego(pixelData: number[] | Uint8Array): StegoAnalysisRes
     if (bitCycle.detected) reasons.push(`periodic_lsb_pattern_detected (period: ${bitCycle.periodicity})`);
     if (noisePrint.suspicious) reasons.push('noise_floor_inconsistency_detected');
 
-    const isSuspicious = (prob > 0.985) ||
-        (rate_rs > 0.2) ||
-        (rate_spa > 0.22 && prob > 0.8) ||
-        (rate_rs > 0.12 && rate_spa > 0.12) ||
-        bitCycle.detected ||
+    const isSuspicious =
+        // Extreme chi-square (>0.99) is suspicious, or high chi-square (>0.95) with some corroboration.
+        (prob > 0.99) ||
+        (prob > 0.95 && (rate_rs > 0.12 || rate_spa > 0.12)) ||
+        // Both RS and SPA must agree at moderate levels, OR one alone at a high level.
+        (rate_rs > 0.20 && rate_spa > 0.15) ||
+        (rate_rs > 0.30) ||
+        (rate_spa > 0.20 && prob > 0.80) ||
+        (rate_rs > 0.10 && rate_spa > 0.10 && prob > 0.85) ||
+        (bitCycle.detected && prob > 0.85) ||
         noisePrint.suspicious;
     return { suspicious: isSuspicious, chiSquareProbability: prob, spaEmbeddingRate: rate_spa, rsEmbeddingRate: rate_rs, bitCycleAnomaly: bitCycle, noiseFingerprint: noisePrint, reasons };
 }

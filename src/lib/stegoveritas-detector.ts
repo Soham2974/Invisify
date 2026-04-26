@@ -132,7 +132,10 @@ export function detectFilterAnomaly(buffer: ArrayBufferLike): boolean {
     const freq = new Array(256).fill(0);
     for (const b of idatContent) freq[b]++;
     const variance = freq.reduce((sum, f) => sum + Math.pow(f - (idatContent.length / 256), 2), 0) / 256;
-    return variance < 0.05;
+    // Only flag extremely uniform filter byte distributions (actual steganographic signature).
+    // Normal compressed images have low variance too; threshold must be tight,
+    // but not so tight it misses real stego (like 0.005). 0.02 is a better balance.
+    return variance < 0.02;
 }
 
 export function analyzeFrameDelays(buffer: ArrayBufferLike): { detected: boolean; variance: number } {
@@ -172,7 +175,9 @@ export function analyzeRGBInconsistency(pixelData: number[] | Uint8Array): { det
     const scores = { r: getLsbEntropy(channels.r), g: getLsbEntropy(channels.g), b: getLsbEntropy(channels.b) };
     const max = Math.max(scores.r, scores.g, scores.b);
     const min = Math.min(scores.r, scores.g, scores.b);
-    return { detected: (max - min) > 0.15 && max > 0.85, scores };
+    // Raise the max threshold to 0.92: natural photos have LSB entropy ~0.9-0.95;
+    // only flag when one channel is near-perfectly noisy (steganographic embedding).
+    return { detected: (max - min) > 0.15 && max > 0.92, scores };
 }
 
 export function detectBitPlaneAnomaly(pixelData: number[] | Uint8Array): boolean {
@@ -278,8 +283,9 @@ export function analyzeGaborResponse(pixelData: number[] | Uint8Array): { detect
     const variance = energies.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / energies.length;
     const cv = Math.sqrt(variance) / Math.max(mean, 0.001);
 
-    // Natural images: CV ~0.3-0.8. Stego-embedded: CV often < 0.2 (smoothed) or > 1.0 (noisy)
-    const detected = cv < 0.15 || cv > 1.2;
+    // Natural images: CV ~0.3-0.8. Stego-embedded: CV often < 0.2 (smoothed) or > 1.0 (noisy).
+    // Smoothness threshold of 0.12 avoids flagging logos / UI screenshots but catches stego.
+    const detected = cv < 0.12 || cv > 1.2;
 
     return { detected, deviation: cv };
 }

@@ -120,14 +120,17 @@ export class DetectionEngine {
 
             // --- Base64 / Encoded Payload Check ---
             detectorsTotal++;
-            // Check if string looks like a discrete base64/hex payload (no spaces, specific charset)
-            const isBase64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(text_in);
-            const isHighDensity = /^[\w!@#$%^&*()-+=]{12,}$/.test(text_in) && !text_in.includes(' ');
-            if ((isBase64 && text_in.length >= 16) || (isHighDensity && textResults.homoglyphs?.entropy?.score && textResults.homoglyphs.entropy.score > 3.5)) {
+            // Require EITHER: proper base64 padding with sufficient length,
+            // OR a high-density string that is very long AND has very high entropy.
+            // This prevents normal short passwords, slugs, or filenames from triggering.
+            const strictBase64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)$/.test(text_in);
+            const entropy = textResults.homoglyphs?.entropy?.score ?? 0;
+            const isHighDensityLong = /^[A-Za-z0-9+/=]{48,}$/.test(text_in) && !text_in.includes(' ') && entropy > 4.0;
+            if ((strictBase64 && text_in.length >= 32) || isHighDensityLong) {
                 detectorsTriggered++;
-                score += 45; 
+                score += 40;
                 reasons.push('obfuscated_or_base64_payload_detected');
-                pValues.push(0.001);
+                pValues.push(0.002);
             } else {
                 pValues.push(0.90);
             }
@@ -253,17 +256,20 @@ export class DetectionEngine {
             detectorsTotal++;
             if (stego?.chiSquareProbability > 0.985) {
                 detectorsTriggered++;
-                imageStrongSignals++;
-                score += 16;
+                // Chi-square alone can fire on screenshots. Only count as a
+                // strong signal when RS or SPA also corroborate at a low level.
+                if (stego?.rsEmbeddingRate > 0.10 || stego?.spaEmbeddingRate > 0.10) {
+                    imageStrongSignals++;
+                }
+                score += 15;
                 reasons.push('chi_square_anomaly_detected');
                 pValues.push(1 - stego.chiSquareProbability);
             } else if (stego?.chiSquareProbability > 0.95) {
                 detectorsTriggered++;
-                imageStrongSignals++;
                 score += 8;
                 reasons.push('chi_square_elevated');
                 pValues.push(1 - stego.chiSquareProbability);
-            } else if (stego?.chiSquareProbability > 0.90) {
+            } else if (stego?.chiSquareProbability > 0.93) {
                 score += 2;
                 pValues.push(0.2);
             } else {
@@ -272,33 +278,35 @@ export class DetectionEngine {
 
             // --- RS Analysis ---
             detectorsTotal++;
-            if (stego?.rsEmbeddingRate > 0.2) {
+            // RS rates are now capped at 0.5 by the detector.
+            if (stego?.rsEmbeddingRate > 0.20) {
                 detectorsTriggered++;
                 imageStrongSignals++;
-                score += 14;
+                score += 15;
                 reasons.push(`rs_embedding_detected (rate=${stego.rsEmbeddingRate.toFixed(3)})`);
                 pValues.push(Math.max(0.001, 0.5 - stego.rsEmbeddingRate));
             } else if (stego?.rsEmbeddingRate > 0.12) {
                 detectorsTriggered++;
-                score += 5;
+                score += 4;
                 reasons.push(`rs_embedding_low (rate=${stego.rsEmbeddingRate.toFixed(3)})`);
-                pValues.push(0.1);
+                pValues.push(0.12);
             } else {
                 pValues.push(0.85);
             }
 
             // --- Sample Pair Analysis ---
             detectorsTotal++;
-            if (stego?.spaEmbeddingRate > 0.22) {
+            // SPA rates are now capped at 0.5 by the detector.
+            if (stego?.spaEmbeddingRate > 0.20) {
                 detectorsTriggered++;
                 imageStrongSignals++;
-                score += 14;
+                score += 15;
                 reasons.push(`spa_embedding_detected (rate=${stego.spaEmbeddingRate.toFixed(3)})`);
                 pValues.push(Math.max(0.001, 0.5 - stego.spaEmbeddingRate));
-            } else if (stego?.spaEmbeddingRate > 0.15) {
+            } else if (stego?.spaEmbeddingRate > 0.12) {
                 detectorsTriggered++;
-                score += 5;
-                pValues.push(0.1);
+                score += 4;
+                pValues.push(0.12);
             } else {
                 pValues.push(0.85);
             }
@@ -419,11 +427,17 @@ export class DetectionEngine {
 
         // Conservative image gating: weak, single-signal statistical noise should not escalate severity.
         if (media_type === 'Image') {
-            if (imageHardEvidence === 0 && imageStrongSignals < 3) {
-                adjustedScore = Math.min(adjustedScore, 20);
-            } else if (imageHardEvidence === 0 && imageStrongSignals === 3) {
+            if (imageHardEvidence === 0 && imageStrongSignals === 0) {
+                // No hard evidence, no strong signals: keep well below 'Low' threshold (15)
+                adjustedScore = Math.min(adjustedScore, 14);
+            } else if (imageHardEvidence === 0 && imageStrongSignals === 1) {
+                // Single strong stat signal: cap at 'Low'
                 adjustedScore = Math.min(adjustedScore, 34);
+            } else if (imageHardEvidence === 0 && imageStrongSignals === 2) {
+                // Two strong stat signals: allow 'Medium'
+                adjustedScore = Math.min(adjustedScore, 59);
             }
+            // If 3+ strong signals, do not cap. Let it reach High/Critical.
         }
 
         const finalScore = Math.min(100, Math.max(0, adjustedScore));
