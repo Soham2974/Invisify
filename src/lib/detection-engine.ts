@@ -242,7 +242,6 @@ export class DetectionEngine {
                     findings.semantic_ai = { isSuspicious: false, reason: "AI unavailable", confidence: 0 };
                 }
             }
-
         } else if (media_type === 'Image' && imageBuffer && pixels) {
             // ==========================================
             // IMAGE ANALYSIS PIPELINE
@@ -256,38 +255,30 @@ export class DetectionEngine {
             detectorsTotal++;
             if (stego?.chiSquareProbability > 0.985) {
                 detectorsTriggered++;
-                // Chi-square alone can fire on screenshots. Only count as a
-                // strong signal when RS or SPA also corroborate at a low level.
-                if (stego?.rsEmbeddingRate > 0.10 || stego?.spaEmbeddingRate > 0.10) {
-                    imageStrongSignals++;
-                }
-                score += 15;
+                imageStrongSignals++; // Always count 98.5%+ as strong
+                score += 25;
                 reasons.push('chi_square_anomaly_detected');
                 pValues.push(1 - stego.chiSquareProbability);
-            } else if (stego?.chiSquareProbability > 0.95) {
+            } else if (stego?.chiSquareProbability > 0.90) {
                 detectorsTriggered++;
-                score += 8;
+                score += 12;
                 reasons.push('chi_square_elevated');
                 pValues.push(1 - stego.chiSquareProbability);
-            } else if (stego?.chiSquareProbability > 0.93) {
-                score += 2;
-                pValues.push(0.2);
             } else {
                 pValues.push(0.80);
             }
 
             // --- RS Analysis ---
             detectorsTotal++;
-            // RS rates are now capped at 0.5 by the detector.
-            if (stego?.rsEmbeddingRate > 0.20) {
+            if (stego?.rsEmbeddingRate > 0.10) { // Lowered from 0.20
                 detectorsTriggered++;
                 imageStrongSignals++;
-                score += 15;
+                score += 25;
                 reasons.push(`rs_embedding_detected (rate=${stego.rsEmbeddingRate.toFixed(3)})`);
                 pValues.push(Math.max(0.001, 0.5 - stego.rsEmbeddingRate));
-            } else if (stego?.rsEmbeddingRate > 0.12) {
+            } else if (stego?.rsEmbeddingRate > 0.05) {
                 detectorsTriggered++;
-                score += 4;
+                score += 8;
                 reasons.push(`rs_embedding_low (rate=${stego.rsEmbeddingRate.toFixed(3)})`);
                 pValues.push(0.12);
             } else {
@@ -296,16 +287,15 @@ export class DetectionEngine {
 
             // --- Sample Pair Analysis ---
             detectorsTotal++;
-            // SPA rates are now capped at 0.5 by the detector.
-            if (stego?.spaEmbeddingRate > 0.20) {
+            if (stego?.spaEmbeddingRate > 0.10) { // Lowered from 0.20
                 detectorsTriggered++;
                 imageStrongSignals++;
-                score += 15;
+                score += 25;
                 reasons.push(`spa_embedding_detected (rate=${stego.spaEmbeddingRate.toFixed(3)})`);
                 pValues.push(Math.max(0.001, 0.5 - stego.spaEmbeddingRate));
-            } else if (stego?.spaEmbeddingRate > 0.12) {
+            } else if (stego?.spaEmbeddingRate > 0.05) {
                 detectorsTriggered++;
-                score += 4;
+                score += 8;
                 pValues.push(0.12);
             } else {
                 pValues.push(0.85);
@@ -316,7 +306,7 @@ export class DetectionEngine {
             if (stego?.bitCycleAnomaly?.detected) {
                 detectorsTriggered++;
                 imageStrongSignals++;
-                score += 6;
+                score += 15;
                 reasons.push(`periodic_lsb_pattern (period=${stego.bitCycleAnomaly.periodicity})`);
                 pValues.push(0.01);
             } else {
@@ -327,11 +317,20 @@ export class DetectionEngine {
             detectorsTotal++;
             if (stego?.noiseFingerprint?.suspicious) {
                 detectorsTriggered++;
-                score += 4;
+                score += 10;
                 reasons.push('noise_floor_inconsistency_detected');
                 pValues.push(0.03);
             } else {
                 pValues.push(0.85);
+            }
+
+            // --- LBP Texture ---
+            detectorsTotal++;
+            if (stego?.lbpAnomaly?.detected) {
+                detectorsTriggered++;
+                score += 12;
+                reasons.push('lbp_texture_anomaly_detected');
+                pValues.push(0.04);
             }
 
             // --- Trailing Data ---
@@ -340,7 +339,7 @@ export class DetectionEngine {
                 detectorsTriggered++;
                 imageStrongSignals++;
                 imageHardEvidence++;
-                score += 38;
+                score += 45;
                 reasons.push(`trailing_data_detected (${veritas.trailingDataSize} bytes)`);
                 pValues.push(0.005);
             } else {
@@ -353,7 +352,7 @@ export class DetectionEngine {
                 detectorsTriggered++;
                 imageStrongSignals++;
                 imageHardEvidence++;
-                score += 20;
+                score += 35;
                 reasons.push('metadata_anomaly_markers_found');
                 pValues.push(0.005);
             } else {
@@ -365,7 +364,7 @@ export class DetectionEngine {
             if (veritas?.channelInconsistency?.detected) {
                 detectorsTriggered++;
                 imageStrongSignals++;
-                score += 7;
+                score += 15;
                 reasons.push('rgb_channel_inconsistency');
                 pValues.push(0.02);
             } else {
@@ -376,7 +375,7 @@ export class DetectionEngine {
             detectorsTotal++;
             if (veritas?.bitPlaneAnomaly) {
                 detectorsTriggered++;
-                score += 4;
+                score += 10;
                 reasons.push('bit_plane_correlation_anomaly');
                 pValues.push(0.03);
             } else {
@@ -389,7 +388,7 @@ export class DetectionEngine {
                 detectorsTriggered++;
                 imageStrongSignals++;
                 imageHardEvidence++;
-                score += 24;
+                score += 30;
                 reasons.push(`shadow_chunks_detected (${veritas.shadowChunks.chunks.join(', ')})`);
                 pValues.push(0.005);
             } else {
@@ -401,7 +400,7 @@ export class DetectionEngine {
             if (veritas?.dctAnomaly?.detected) {
                 detectorsTriggered++;
                 imageStrongSignals++;
-                score += 12;
+                score += 20;
                 reasons.push(`jpeg_dct_anomaly (benford_dev=${veritas.dctAnomaly.benfordDeviation.toFixed(3)})`);
                 pValues.push(veritas.dctAnomaly.pValue);
             } else {
@@ -410,11 +409,11 @@ export class DetectionEngine {
 
             // --- Fisher's Combined Image Ensemble ---
             const imagePValues = pValues.filter(p => p < 0.5);
-            if (imagePValues.length >= 4 && (imageHardEvidence > 0 || imageStrongSignals >= 3)) {
+            if (imagePValues.length >= 3 && (imageHardEvidence > 0 || imageStrongSignals >= 2)) {
                 const fisherStat = this.fisherCombinedTest(imagePValues);
                 findings.fisher_ensemble = { statistic: fisherStat.statistic, pValue: fisherStat.pValue, k: imagePValues.length };
-                if (fisherStat.pValue < 0.001) {
-                    score += 8;
+                if (fisherStat.pValue < 0.005) {
+                    score += 15;
                     reasons.push('fisher_ensemble_confirmed');
                 }
             }
@@ -425,19 +424,16 @@ export class DetectionEngine {
         // ==========================================
         let adjustedScore = score;
 
-        // Conservative image gating: weak, single-signal statistical noise should not escalate severity.
+        // Relaxed image gating: allow corroborated signals to reach High/Critical
         if (media_type === 'Image') {
             if (imageHardEvidence === 0 && imageStrongSignals === 0) {
-                // No hard evidence, no strong signals: keep well below 'Low' threshold (15)
-                adjustedScore = Math.min(adjustedScore, 14);
+                adjustedScore = Math.min(adjustedScore, 24); // Up to Low
             } else if (imageHardEvidence === 0 && imageStrongSignals === 1) {
-                // Single strong stat signal: cap at 'Low'
-                adjustedScore = Math.min(adjustedScore, 34);
+                adjustedScore = Math.min(adjustedScore, 49); // Up to Medium
             } else if (imageHardEvidence === 0 && imageStrongSignals === 2) {
-                // Two strong stat signals: allow 'Medium'
-                adjustedScore = Math.min(adjustedScore, 59);
+                adjustedScore = Math.min(adjustedScore, 79); // Up to High
             }
-            // If 3+ strong signals, do not cap. Let it reach High/Critical.
+            // 3+ strong signals or hard evidence -> no cap.
         }
 
         const finalScore = Math.min(100, Math.max(0, adjustedScore));
@@ -446,6 +442,7 @@ export class DetectionEngine {
         const verifiedPayloads: string[] = [];
         if (findings.text?.zero_width?.verifiedPayload) verifiedPayloads.push(findings.text.zero_width.verifiedPayload);
         if (findings.text?.emoji_threats?.verifiedPayload) verifiedPayloads.push(findings.text.emoji_threats.verifiedPayload);
+        if (findings.image?.stego_analysis?.verifiedPayload) verifiedPayloads.push(findings.image.stego_analysis.verifiedPayload);
 
         let verifiedScore = finalScore;
         if (verifiedPayloads.length > 0 && finalScore < 90) {
