@@ -125,8 +125,8 @@ export class DetectionEngine {
             // This prevents normal short passwords, slugs, or filenames from triggering.
             const strictBase64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)$/.test(text_in);
             const entropy = textResults.homoglyphs?.entropy?.score ?? 0;
-            const isHighDensityLong = /^[A-Za-z0-9+/=]{48,}$/.test(text_in) && !text_in.includes(' ') && entropy > 4.0;
-            if ((strictBase64 && text_in.length >= 32) || isHighDensityLong) {
+            const isHighDensityLong = /^[A-Za-z0-9+/=]{16,}$/.test(text_in) && !text_in.includes(' ') && entropy > 3.8;
+            if ((strictBase64 && text_in.length >= 12) || isHighDensityLong) {
                 detectorsTriggered++;
                 score += 40;
                 reasons.push('obfuscated_or_base64_payload_detected');

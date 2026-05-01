@@ -252,7 +252,7 @@ export function detectEmojiPatternFrequency(text: string) {
  */
 export function analyzeEmojiNibbles(text: string) {
     const clusters = getGraphemeClusters(text).filter(c => EMOJI_REGEX.test(c));
-    if (clusters.length < 10) return { suspicious: false, reasons: [] };
+    if (clusters.length < 5) return { suspicious: false, reasons: [] };
 
     const uniqueEmojiCount = new Set(clusters).size;
     const reasons: string[] = [];
@@ -260,9 +260,9 @@ export function analyzeEmojiNibbles(text: string) {
     // Most stego nibble schemes use exactly 16 (or sometimes 4 or 8) emojis.
     // If a long sequence uses exactly 2^n emojis, it's highly suspicious.
     const powersOfTwo = [2, 4, 8, 16, 32];
-    if (powersOfTwo.includes(uniqueEmojiCount) && clusters.length > 20) {
+    if (powersOfTwo.includes(uniqueEmojiCount) && clusters.length > 8) {
         reasons.push(`nibble_stego_detected (exact_${uniqueEmojiCount}_emoji_alphabet)`);
-    } else if (uniqueEmojiCount < 5 && clusters.length > 15) {
+    } else if (uniqueEmojiCount < 5 && clusters.length > 8) {
         reasons.push(`low_entropy_emoji_nibble_encoding (${uniqueEmojiCount}_unique)`);
     }
 
@@ -307,7 +307,7 @@ export function analyzeEmojiFrequency(text: string) {
     }
     maxDiverseRun = Math.max(maxDiverseRun, diverseRun);
 
-    if (maxDiverseRun > 10) {
+    if (maxDiverseRun > 6) {
         reasons.push(`abnormal_emoji_diversity_run (${maxDiverseRun}_unique_sequence)`);
     }
 
@@ -424,13 +424,31 @@ function bruteForceDecodeEmoji(text: string): string | null {
 }
 
 export function detect_emoji_patterns(text: string) {
-    const emojiMap = [...text];
+    const chars = [...text];
     const emojiSet = new Set([...EMOJI_CHARS]);
-    let encCount = 0;
-    for (const char of emojiMap) if (emojiSet.has(char)) encCount++;
-    const density = encCount / Math.max(1, emojiMap.length);
-    const suspicious = (density > 0.8 && text.length > 5) || (density > 0.5 && text.length > 15);
-    if (suspicious) return { suspicious: true, reasons: ['high_density_of_specific_encoding_emojis'] };
-    return { suspicious: false, reasons: [] };
+    let specificEncCount = 0;
+    let genericEmojiCount = 0;
+    
+    for (const char of chars) {
+        if (emojiSet.has(char)) specificEncCount++;
+        if (EMOJI_REGEX.test(char)) genericEmojiCount++;
+    }
+    
+    const specificDensity = specificEncCount / Math.max(1, chars.length);
+    const genericDensity = genericEmojiCount / Math.max(1, chars.length);
+    
+    const reasons: string[] = [];
+    if ((specificDensity > 0.8 && text.length > 5) || (specificDensity > 0.5 && text.length > 15)) {
+        reasons.push('high_density_of_specific_encoding_emojis');
+    }
+    
+    // Flag strings that are 100% emojis and >= 8 chars, or high density and long
+    if (genericDensity > 0.95 && chars.length >= 8) {
+        reasons.push('pure_emoji_payload_detected');
+    } else if (genericDensity > 0.8 && chars.length >= 16) {
+        reasons.push('high_density_emoji_sequence');
+    }
+    
+    return { suspicious: reasons.length > 0, reasons };
 }
 

@@ -161,6 +161,13 @@ export const HOMOGLYPH_CATEGORIES = {
         'Ｓ': 'S', 'Ｔ': 'T', 'Ｕ': 'U', 'Ｖ': 'V', 'Ｗ': 'W', 'Ｘ': 'X',
         'Ｙ': 'Y', 'Ｚ': 'Z',
     },
+    PUNCTUATION: {
+        '․': '.', '．': '.', '。': '.', '．': '.', '…': '...',
+        '−': '-', '–': '-', '—': '-', '―': '-', '‐': '-', '‑': '-', '‒': '-',
+        '∕': '/', '／': '/', '⧵': '\\', '＼': '\\', '：': ':', '；': ';',
+        '？': '?', '！': '!', '，': ',', '（': '(', '）': ')', '［': '[', '］': ']',
+        '｛': '{', '｝': '}', '“': '"', '”': '"', '‘': "'", '’': "'",
+    },
 } as const;
 
 export const HOMOGLYPHS: Record<string, string> = {
@@ -172,6 +179,7 @@ export const HOMOGLYPHS: Record<string, string> = {
     ...HOMOGLYPH_CATEGORIES.LATIN_EXTENDED,
     ...HOMOGLYPH_CATEGORIES.MATHEMATICAL,
     ...HOMOGLYPH_CATEGORIES.FULLWIDTH,
+    ...HOMOGLYPH_CATEGORIES.PUNCTUATION,
 };
 
 export interface ZeroWidthDetection {
@@ -268,7 +276,7 @@ export function calculateShannonEntropy(text: string): { score: number; suspicio
     const normalizedEntropy = maxEntropy > 0 ? entropy / maxEntropy : 0;
     
     // Suspicious if it is extremely dense (ratio > 0.85 for short strings) or highly entropic overall
-    const suspicious = (normalizedEntropy > 0.88 && text.length >= 12) || (entropy > 5.0 && text.length >= 40);
+    const suspicious = (normalizedEntropy > 0.82 && text.length >= 10) || (entropy > 4.2 && text.length >= 24);
     
     return { score: entropy, suspicious };
 }
