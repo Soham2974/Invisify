@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ShieldCheck, ShieldAlert, AlertTriangle, Scan, TrendingUp } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, AlertTriangle, Scan } from 'lucide-react';
 import StatCard from './stat-card';
 import MiniChart from './mini-chart';
 import type { ScanResult } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 interface ThreatOverviewProps {
   scans: ScanResult[];
@@ -61,12 +62,13 @@ export default function ThreatOverview({ scans }: ThreatOverviewProps) {
           {scans.slice(0, 8).map((s, i) => (
             <div
               key={i}
-              className={`flex-1 h-1.5 rounded-full ${
+              className={cn(
+                'flex-1 h-1.5 rounded-full',
                 s.severity === 'Critical' ? 'bg-red-500' :
                 s.severity === 'High' ? 'bg-rose-500' :
                 s.severity === 'Medium' ? 'bg-amber-500/40' :
-                'bg-white/[0.06]'
-              }`}
+                'bg-neutral-200 dark:bg-white/[0.06]'
+              )}
             />
           ))}
         </div>
@@ -80,9 +82,9 @@ export default function ThreatOverview({ scans }: ThreatOverviewProps) {
         accentColor="emerald"
       >
         {/* Mini progress bar */}
-        <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
+        <div className="w-full h-2 rounded-full bg-neutral-100 dark:bg-white/[0.06] overflow-hidden shadow-inner">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-700"
+            className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 dark:from-emerald-500 dark:to-emerald-400 transition-all duration-700"
             style={{ width: `${stats.safeRatio}%` }}
           />
         </div>

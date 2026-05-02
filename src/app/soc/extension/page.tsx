@@ -46,14 +46,14 @@ export default function ExtensionPage() {
             <Chrome size={12} className="text-cyan-500" />
             <span className="text-[10px] font-mono text-cyan-500/60 uppercase tracking-widest">Extension Interface</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Extension Monitor</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Extension Monitor</h1>
           <p className="text-xs text-neutral-500 mt-0.5">Gmail scanning events and browser extension status</p>
         </div>
 
         <a
           href="/api/download-extension"
           download="sentinel-prime-extension.zip"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-all text-xs font-mono font-bold"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20 transition-all text-xs font-mono font-bold shadow-sm"
         >
           <Download size={14} className="animate-pulse" />
           Download Extension ZIP
@@ -61,59 +61,59 @@ export default function ExtensionPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-emerald-500/10 bg-emerald-500/[0.03] p-5">
+        <div className="rounded-2xl border border-emerald-500/20 dark:border-emerald-500/10 bg-emerald-500/[0.03] p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <Wifi size={14} className="text-emerald-400 animate-pulse" />
             <span className="text-[10px] font-mono text-neutral-600 uppercase">Status</span>
           </div>
-          <p className="text-lg font-bold text-emerald-400">{isConnected ? 'Connected' : 'Disconnected'}</p>
+          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{isConnected ? 'Connected' : 'Disconnected'}</p>
           <p className="text-[10px] text-neutral-600 font-mono mt-0.5">/api/extension-events</p>
         </div>
-        <div className="rounded-2xl border border-rose-500/10 bg-rose-500/[0.03] p-5">
+        <div className="rounded-2xl border border-rose-500/20 dark:border-rose-500/10 bg-rose-500/[0.03] p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <ShieldX size={14} className="text-rose-400" />
             <span className="text-[10px] font-mono text-neutral-600 uppercase">Blocked</span>
           </div>
-          <p className="text-3xl font-bold text-rose-400">{blockedCount}</p>
+          <p className="text-3xl font-bold text-rose-500 dark:text-rose-400">{blockedCount}</p>
         </div>
-        <div className="rounded-2xl border border-amber-500/10 bg-amber-500/[0.03] p-5">
+        <div className="rounded-2xl border border-amber-500/20 dark:border-amber-500/10 bg-amber-500/[0.03] p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <Shield size={14} className="text-amber-400" />
             <span className="text-[10px] font-mono text-neutral-600 uppercase">Warned</span>
           </div>
-          <p className="text-3xl font-bold text-amber-400">{warnedCount}</p>
+          <p className="text-3xl font-bold text-amber-500 dark:text-amber-400">{warnedCount}</p>
         </div>
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+        <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-neutral-50 dark:bg-white/[0.02] p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <ShieldCheck size={14} className="text-neutral-500" />
             <span className="text-[10px] font-mono text-neutral-600 uppercase">Allowed</span>
           </div>
-          <p className="text-3xl font-bold text-white">{allowedCount}</p>
+          <p className="text-3xl font-bold text-neutral-900 dark:text-white">{allowedCount}</p>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0d1117]/80 p-5">
+      <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 p-5 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <p className="text-[10px] font-mono text-neutral-600 uppercase mb-1">Extension Version</p>
-            <p className="text-sm font-bold text-white">Manifest V3</p>
+            <p className="text-sm font-bold text-neutral-900 dark:text-white">Manifest V3</p>
           </div>
           <div>
             <p className="text-[10px] font-mono text-neutral-600 uppercase mb-1">SHA-256 Cache</p>
             <div className="flex items-center gap-2">
               <Database size={12} className="text-cyan-500" />
-              <p className="text-sm font-bold text-white">{events.length} fingerprints</p>
+              <p className="text-sm font-bold text-neutral-900 dark:text-white">{events.length} fingerprints</p>
             </div>
           </div>
           <div>
             <p className="text-[10px] font-mono text-neutral-600 uppercase mb-1">Detection Mode</p>
-            <p className="text-sm font-bold text-white">API + Local Fallback</p>
+            <p className="text-sm font-bold text-neutral-900 dark:text-white">API + Local Fallback</p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0d1117]/80 overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+      <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/[0.06] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Chrome size={14} className="text-cyan-500" />
             <span className="text-xs font-mono text-neutral-400 uppercase tracking-widest">Gmail Scan Events</span>

@@ -2,7 +2,6 @@
 
 import { cn } from '@/lib/utils';
 import type { ScanResult, Severity } from '@/lib/types';
-import SeverityBadge from './severity-badge';
 import RiskGauge from './risk-gauge';
 import {
   Info,
@@ -63,20 +62,20 @@ export default function ScanResultPanel({ result }: ScanResultPanelProps) {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+        <div className="p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-100 dark:border-white/[0.06]">
           <p className="text-[9px] font-mono text-neutral-600 uppercase mb-1">Method</p>
           <div className="flex items-center gap-1.5">
             {hasAI && <Brain size={12} className="text-purple-400" />}
-            <span className="text-xs font-bold text-white">{hasAI ? 'AI + STAT' : 'STAT'}</span>
+            <span className="text-xs font-bold text-neutral-900 dark:text-white">{hasAI ? 'AI + STAT' : 'STAT'}</span>
           </div>
         </div>
-        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+        <div className="p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-100 dark:border-white/[0.06]">
           <p className="text-[9px] font-mono text-neutral-600 uppercase mb-1">Confidence</p>
-          <span className="text-xs font-bold text-white">{(ensembleConfidence * 100).toFixed(1)}%</span>
+          <span className="text-xs font-bold text-neutral-900 dark:text-white">{(ensembleConfidence * 100).toFixed(1)}%</span>
         </div>
-        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+        <div className="p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-100 dark:border-white/[0.06]">
           <p className="text-[9px] font-mono text-neutral-600 uppercase mb-1">Detectors</p>
-          <span className="text-xs font-bold text-white">{detectorsTriggered}/{detectorsTotal}</span>
+          <span className="text-xs font-bold text-neutral-900 dark:text-white">{detectorsTriggered}/{detectorsTotal}</span>
         </div>
       </div>
 
@@ -86,7 +85,7 @@ export default function ScanResultPanel({ result }: ScanResultPanelProps) {
           <Info size={12} className="text-neutral-600" />
           <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">AI Summary</span>
         </div>
-        <p className="text-sm text-neutral-300 leading-relaxed p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+        <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-100 dark:border-white/[0.06]">
           {result.summary}
         </p>
       </div>
@@ -102,9 +101,9 @@ export default function ScanResultPanel({ result }: ScanResultPanelProps) {
           </div>
           <div className="space-y-1.5">
             {result.reasons.map((reason, i) => (
-              <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+              <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/[0.04]">
                 <div className="w-1 h-1 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                <span className="text-[11px] text-neutral-400 leading-relaxed">{reason}</span>
+                <span className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">{reason}</span>
               </div>
             ))}
           </div>
@@ -120,7 +119,7 @@ export default function ScanResultPanel({ result }: ScanResultPanelProps) {
         Raw Detection Data
       </button>
       {expandedFindings && (
-        <pre className="text-[10px] font-mono text-neutral-600 bg-black/40 rounded-xl p-4 overflow-x-auto border border-white/[0.04] max-h-64 overflow-y-auto">
+        <pre className="text-[10px] font-mono text-neutral-600 bg-neutral-50 dark:bg-black/40 rounded-xl p-4 overflow-x-auto border border-neutral-100 dark:border-white/[0.04] max-h-64 overflow-y-auto shadow-inner">
           {JSON.stringify(parsedFindings, null, 2)}
         </pre>
       )}

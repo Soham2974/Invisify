@@ -6,6 +6,7 @@ import { StegoShieldLogo } from '@/components/app/icons';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
   Sheet,
   SheetContent,
@@ -60,8 +61,9 @@ export default function Header() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-4">
-            <Button asChild size="sm" className="hidden md:flex bg-white text-black hover:bg-neutral-200 rounded-full h-8 px-4 text-xs font-bold transition-all">
+          <div className="flex items-center gap-3">
+            <ThemeToggle className="hidden md:flex" />
+            <Button asChild size="sm" className="hidden md:flex bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black dark:hover:bg-neutral-200 rounded-full h-8 px-4 text-xs font-bold transition-all">
               <Link href="/scan">Launch Scan</Link>
             </Button>
 

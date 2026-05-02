@@ -16,8 +16,10 @@ import {
   ChevronRight,
   Activity,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useLogStore } from '@/lib/store';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const NAV_ITEMS = [
   { href: '/soc', label: 'Dashboard', icon: LayoutDashboard, section: 'main' },
@@ -69,7 +71,7 @@ export default function Sidebar() {
           </span>
         )}
         {collapsed && (
-          <div className="absolute left-full ml-3 px-3 py-1.5 bg-neutral-900/95 border border-white/10 rounded-lg text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-50 shadow-xl backdrop-blur-sm">
+          <div className="absolute left-full ml-3 px-3 py-1.5 bg-white dark:bg-neutral-900/95 border border-neutral-200 dark:border-white/10 rounded-lg text-xs text-neutral-900 dark:text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-50 shadow-xl backdrop-blur-sm">
             {item.label}
           </div>
         )}
@@ -80,40 +82,50 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        'h-screen sticky top-0 flex flex-col border-r border-white/[0.06] transition-all duration-300 z-50 shrink-0 relative',
+        'h-screen sticky top-0 flex flex-col border-r border-neutral-200 dark:border-white/[0.06] transition-all duration-300 z-50 shrink-0 relative',
         collapsed ? 'w-[72px]' : 'w-[260px]'
       )}
     >
       {/* Sidebar background with subtle gradient */}
-      <div className="absolute inset-0 bg-[#050810]" />
-      <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.01] via-transparent to-purple-500/[0.01]" />
+      <div className="absolute inset-0 bg-white dark:bg-[#050810] transition-colors duration-300" />
+      <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.02] dark:from-emerald-500/[0.01] via-transparent to-purple-500/[0.02] dark:to-purple-500/[0.01]" />
 
       <div className="relative flex flex-col h-full">
         {/* Logo */}
-        <div className={cn('flex items-center gap-3 px-5 h-[68px] border-b border-white/[0.06] shrink-0', collapsed && 'justify-center px-0')}>
-          <div className="relative">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-              <Shield size={18} className="text-white" />
+        <div className={cn('flex items-center gap-3 px-5 h-[72px] border-b border-neutral-200 dark:border-white/[0.06] shrink-0', collapsed && 'justify-center px-2')}>
+          <Link href="/soc" className="flex items-center gap-3 group/logo">
+            <div className="relative shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center overflow-hidden shadow-lg group-hover/logo:scale-105 transition-transform duration-300">
+                <Image 
+                  src="/logo.png" 
+                  alt="Invisify Logo" 
+                  width={36} 
+                  height={36} 
+                  className="object-cover"
+                  priority
+                />
+              </div>
+              <div className="absolute -inset-1 bg-emerald-500/20 rounded-xl blur opacity-0 group-hover/logo:opacity-100 transition-opacity" />
             </div>
-          </div>
-          {!collapsed && (
-            <div className="overflow-hidden">
-              <h1 className="text-[13px] font-black text-white tracking-tight leading-none">SENTINEL PRIME</h1>
-              <p className="text-[9px] text-emerald-400/50 font-mono tracking-[0.3em] mt-0.5">INVISIFY</p>
-            </div>
-          )}
+            {!collapsed && (
+              <div className="overflow-hidden">
+                <h1 className="text-[14px] font-black text-neutral-900 dark:text-white tracking-tight leading-none">SENTINEL PRIME</h1>
+                <p className="text-[9px] text-emerald-600 dark:text-emerald-400/60 font-mono tracking-[0.2em] mt-1">INVISIFY SYSTEM</p>
+              </div>
+            )}
+          </Link>
         </div>
 
         {/* System status bar */}
         {!collapsed && (
-          <div className="px-5 py-3 border-b border-white/[0.04]">
+          <div className="px-5 py-3 border-b border-neutral-200 dark:border-white/[0.04]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                 </div>
-                <span className="text-[10px] font-mono text-emerald-400/40 uppercase tracking-[0.2em]">System Online</span>
+                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400/40 uppercase tracking-[0.2em]">System Online</span>
               </div>
               <div className="w-8 h-1 rounded-full bg-emerald-500/20 overflow-hidden">
                 <div className="w-full h-full bg-emerald-500/40 animate-pulse rounded-full" />
@@ -128,33 +140,38 @@ export default function Sidebar() {
             <p className="px-3 mb-2.5 text-[10px] font-semibold text-neutral-600/80 uppercase tracking-[0.2em]">Operations</p>
           )}
           {NAV_ITEMS.filter((i) => i.section === 'main').map((item) =>
-            renderNavItem(item, 'text-emerald-400', 'bg-emerald-500/[0.08]')
+            renderNavItem(item, 'text-emerald-600 dark:text-emerald-400', 'bg-emerald-500/10 dark:bg-emerald-500/[0.08]')
           )}
 
-          <div className="my-4 mx-3 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+          <div className="my-4 mx-3 h-px bg-gradient-to-r from-transparent via-neutral-100 dark:via-white/[0.04] to-transparent" />
 
           {!collapsed && (
             <p className="px-3 mb-2.5 text-[10px] font-semibold text-neutral-600/80 uppercase tracking-[0.2em]">Monitor</p>
           )}
           {NAV_ITEMS.filter((i) => i.section === 'monitor').map((item) =>
-            renderNavItem(item, 'text-cyan-400', 'bg-cyan-500/[0.08]')
+            renderNavItem(item, 'text-cyan-600 dark:text-cyan-400', 'bg-cyan-500/10 dark:bg-cyan-500/[0.08]')
           )}
 
-          <div className="my-4 mx-3 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+          <div className="my-4 mx-3 h-px bg-gradient-to-r from-transparent via-neutral-100 dark:via-white/[0.04] to-transparent" />
 
           {!collapsed && (
             <p className="px-3 mb-2.5 text-[10px] font-semibold text-neutral-600/80 uppercase tracking-[0.2em]">System</p>
           )}
           {NAV_ITEMS.filter((i) => i.section === 'system').map((item) =>
-            renderNavItem(item, 'text-purple-400', 'bg-purple-500/[0.08]')
+            renderNavItem(item, 'text-purple-600 dark:text-purple-400', 'bg-purple-500/10 dark:bg-purple-500/[0.08]')
           )}
         </nav>
 
         {/* Bottom panel */}
-        <div className="border-t border-white/[0.04] p-3 shrink-0 space-y-2">
+        <div className="border-t border-neutral-200 dark:border-white/[0.04] p-3 shrink-0 space-y-2">
+          {/* Theme Toggle */}
+          <div className={cn('flex items-center', collapsed ? 'justify-center' : 'justify-between px-2')}>
+            {!collapsed && <span className="text-[10px] font-mono text-neutral-600 uppercase tracking-[0.15em]">Theme</span>}
+            <ThemeToggle />
+          </div>
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-neutral-600 hover:text-neutral-300 hover:bg-white/[0.03] transition-all"
+            className="w-full flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-neutral-500 dark:text-neutral-600 hover:text-neutral-900 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.03] transition-all"
           >
             {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
             {!collapsed && <span className="text-[11px] font-mono">Collapse</span>}

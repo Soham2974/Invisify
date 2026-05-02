@@ -18,15 +18,15 @@ import {
 } from 'lucide-react';
 
 const TYPE_CONFIG: Record<ActivityEvent['type'], { icon: React.ElementType; color: string; label: string }> = {
-  zero_width:       { icon: EyeOff,       color: 'text-emerald-400',  label: 'ZWSP' },
-  homoglyph:        { icon: Type,          color: 'text-amber-400',    label: 'HOMO' },
-  emoji_stego:      { icon: Smile,         color: 'text-purple-400',   label: 'EMOJI' },
-  image_lsb:        { icon: ImageIcon,     color: 'text-blue-400',     label: 'IMAGE' },
-  bidi:             { icon: AlertTriangle, color: 'text-red-400',      label: 'BIDI' },
-  prompt_injection:  { icon: ShieldAlert,   color: 'text-orange-400',   label: 'INJECT' },
-  ai_semantic:      { icon: Brain,         color: 'text-pink-400',     label: 'AI' },
+  zero_width:       { icon: EyeOff,       color: 'text-emerald-600 dark:text-emerald-400',  label: 'ZWSP' },
+  homoglyph:        { icon: Type,          color: 'text-amber-600 dark:text-amber-400',    label: 'HOMO' },
+  emoji_stego:      { icon: Smile,         color: 'text-purple-600 dark:text-purple-400',   label: 'EMOJI' },
+  image_lsb:        { icon: ImageIcon,     color: 'text-blue-600 dark:text-blue-400',     label: 'IMAGE' },
+  bidi:             { icon: AlertTriangle, color: 'text-red-600 dark:text-red-400',      label: 'BIDI' },
+  prompt_injection:  { icon: ShieldAlert,   color: 'text-orange-600 dark:text-orange-400',   label: 'INJECT' },
+  ai_semantic:      { icon: Brain,         color: 'text-pink-600 dark:text-pink-400',     label: 'AI' },
   safe:             { icon: ShieldCheck,   color: 'text-neutral-500',  label: 'SAFE' },
-  extension:        { icon: Chrome,        color: 'text-cyan-400',     label: 'EXT' },
+  extension:        { icon: Chrome,        color: 'text-cyan-600 dark:text-cyan-400',     label: 'EXT' },
 };
 
 const SEVERITY_DOT: Record<Severity, string> = {
@@ -75,7 +75,7 @@ export default function LiveActivityFeed({ events, maxVisible = 8 }: LiveActivit
             key={event.id}
             className={cn(
               'flex items-start gap-3 p-3 rounded-xl transition-all duration-300',
-              'hover:bg-white/[0.03] group',
+              'hover:bg-neutral-100 dark:hover:bg-white/[0.03] group',
               'animate-in fade-in slide-in-from-top-2',
             )}
             style={{ animationDelay: `${idx * 50}ms` }}
@@ -84,7 +84,7 @@ export default function LiveActivityFeed({ events, maxVisible = 8 }: LiveActivit
             <div className="flex flex-col items-center gap-1 shrink-0 pt-1">
               <div className={cn('w-2 h-2 rounded-full', SEVERITY_DOT[event.severity])} />
               {idx < visibleEvents.length - 1 && (
-                <div className="w-px flex-1 bg-white/[0.04] min-h-[16px]" />
+                <div className="w-px flex-1 bg-neutral-200 dark:bg-white/[0.04] min-h-[16px]" />
               )}
             </div>
 
@@ -99,7 +99,7 @@ export default function LiveActivityFeed({ events, maxVisible = 8 }: LiveActivit
                   {formatTimestamp(event.timestamp)}
                 </span>
               </div>
-              <p className="text-xs text-neutral-400 leading-relaxed truncate group-hover:text-neutral-300 transition-colors">
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed truncate group-hover:text-neutral-900 dark:group-hover:text-neutral-300 transition-colors">
                 {event.message}
               </p>
               <div className="flex items-center gap-2 mt-1">

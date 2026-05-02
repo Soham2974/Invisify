@@ -13,10 +13,13 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
 // hyperspeed + its presets are bundled together in a single async chunk.
-// Neither import surfaces in the synchronous module graph of this file,
-// so Webpack can defer them until the browser is idle.
+// wrapped in error boundary to prevent ChunkLoadError from crashing the layout.
 const HyperspeedScene = dynamic(
-  () => import('./hyperspeed-scene'),
+  () => import('./hyperspeed-scene').catch(() => {
+    // If the WebGL chunk fails to load (timeout, network issue),
+    // gracefully degrade to a plain background.
+    return { default: () => <div className="fixed inset-0 bg-black z-0" /> };
+  }),
   {
     ssr: false,
     loading: () => <div className="fixed inset-0 bg-black z-0" />,

@@ -3,9 +3,8 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/app/header';
 import { cn } from '@/lib/utils';
-// HyperspeedBackground mounts the WebGL canvas ONCE for the entire app.
-// It persists across page navigations — no teardown/recreate per route.
 import HyperspeedBackground from '@/components/app/hyperspeed-background';
+import { ThemeProvider } from '@/components/theme-provider';
 
 import { Inter } from 'next/font/google';
 
@@ -16,8 +15,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'INVISIFY',
-  description: 'A Steganography Detection System',
+  title: 'Invisify | Sentinel Prime SOC',
+  description: 'Advanced Steganography Detection & Forensic Analysis System',
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -26,18 +30,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn('h-full', inter.variable)}>
+    <html lang="en" className={cn('h-full', inter.variable)} suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={cn(
-          'font-body antialiased h-full flex flex-col bg-black overflow-x-hidden p-0 m-0',
+          'font-body antialiased h-full flex flex-col bg-white dark:bg-black overflow-x-hidden p-0 m-0 transition-colors duration-300',
           process.env.NODE_ENV === 'development' ? 'debug-screens' : ''
         )}
       >
-        {/* Singleton WebGL background — renders once, persists across all routes */}
-        <HyperspeedBackground />
-        <Header />
-        <main className="flex-1 flex flex-col">{children}</main>
-        <Toaster />
+        <ThemeProvider>
+          {/* Singleton WebGL background — renders once, persists across all routes */}
+          <HyperspeedBackground />
+          <Header />
+          <main className="flex-1 flex flex-col">{children}</main>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -4,11 +4,11 @@ import { cn } from '@/lib/utils';
 import type { Severity } from '@/lib/types';
 
 const styles: Record<Severity, { bg: string; text: string; border: string; dot: string }> = {
-  Safe:     { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', dot: 'bg-emerald-500' },
-  Low:      { bg: 'bg-teal-500/10',    text: 'text-teal-400',    border: 'border-teal-500/20',    dot: 'bg-teal-500' },
-  Medium:   { bg: 'bg-amber-500/10',   text: 'text-amber-400',   border: 'border-amber-500/20',   dot: 'bg-amber-500' },
-  High:     { bg: 'bg-rose-500/10',    text: 'text-rose-400',    border: 'border-rose-500/20',     dot: 'bg-rose-500' },
-  Critical: { bg: 'bg-red-600/15',     text: 'text-red-400',     border: 'border-red-500/30',      dot: 'bg-red-500' },
+  Safe:     { bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-500/20', dot: 'bg-emerald-500' },
+  Low:      { bg: 'bg-teal-500/10',    text: 'text-teal-600 dark:text-teal-400',    border: 'border-teal-500/20',    dot: 'bg-teal-500' },
+  Medium:   { bg: 'bg-amber-500/10',   text: 'text-amber-600 dark:text-amber-400',   border: 'border-amber-500/20',   dot: 'bg-amber-500' },
+  High:     { bg: 'bg-rose-500/10',    text: 'text-rose-600 dark:text-rose-400',    border: 'border-rose-500/20',     dot: 'bg-rose-500' },
+  Critical: { bg: 'bg-red-600/15',     text: 'text-red-600 dark:text-red-400',     border: 'border-red-500/30',      dot: 'bg-red-500' },
 };
 
 interface SeverityBadgeProps {

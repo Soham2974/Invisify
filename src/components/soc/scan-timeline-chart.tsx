@@ -16,11 +16,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   const color = score >= 80 ? '#ef4444' : score >= 60 ? '#f43f5e' : score >= 30 ? '#f59e0b' : score >= 10 ? '#14b8a6' : '#10b981';
 
   return (
-    <div className="bg-[#0d1117] border border-white/10 rounded-xl px-4 py-3 shadow-2xl">
+    <div className="bg-white/95 dark:bg-[#0d1117]/95 border border-neutral-200 dark:border-white/10 rounded-xl px-4 py-3 shadow-2xl backdrop-blur-md">
       <p className="text-[10px] font-mono text-neutral-500 mb-1">{label}</p>
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-lg font-bold text-white">{score}</span>
+        <span className="text-lg font-bold text-neutral-900 dark:text-white">{score}</span>
         <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color }}>{severity}</span>
       </div>
     </div>
@@ -51,17 +51,19 @@ export default function ScanTimelineChart({ scans }: ScanTimelineChartProps) {
             <stop offset="100%" stopColor="#ef4444" stopOpacity={0.05} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+        <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-neutral-100 dark:text-white/[0.04]" />
         <XAxis
           dataKey="time"
-          tick={{ fill: '#525252', fontSize: 10, fontFamily: 'monospace' }}
-          axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
+          tick={{ fill: '#737373', fontSize: 10, fontFamily: 'monospace' }}
+          axisLine={{ stroke: 'currentColor' }}
+          className="text-neutral-200 dark:text-white/[0.06]"
           tickLine={false}
         />
         <YAxis
           domain={[0, 100]}
-          tick={{ fill: '#525252', fontSize: 10, fontFamily: 'monospace' }}
-          axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
+          tick={{ fill: '#737373', fontSize: 10, fontFamily: 'monospace' }}
+          axisLine={{ stroke: 'currentColor' }}
+          className="text-neutral-200 dark:text-white/[0.06]"
           tickLine={false}
         />
         {/* Threshold lines */}
@@ -76,8 +78,9 @@ export default function ScanTimelineChart({ scans }: ScanTimelineChartProps) {
           stroke="#10b981"
           strokeWidth={2}
           fill="url(#scoreGradient)"
-          dot={{ fill: '#0d1117', stroke: '#10b981', strokeWidth: 2, r: 3 }}
-          activeDot={{ fill: '#10b981', stroke: '#0d1117', strokeWidth: 2, r: 5 }}
+          dot={{ fill: 'currentColor', stroke: '#10b981', strokeWidth: 2, r: 3 }}
+          activeDot={{ fill: '#10b981', stroke: 'currentColor', strokeWidth: 2, r: 5 }}
+          className="text-white dark:text-[#0d1117]"
           animationDuration={1200}
         />
       </AreaChart>

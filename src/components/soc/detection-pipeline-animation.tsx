@@ -70,12 +70,12 @@ export default function DetectionPipelineAnimation({ isScanning }: Props) {
   const progress = Math.min((activeStage / (STAGES.length - 1)) * 100, 100);
 
   return (
-    <div className="p-6 rounded-2xl border border-white/[0.06] bg-[#0d1117]/80 backdrop-blur-xl w-full">
+    <div className="p-6 rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl w-full shadow-sm">
       <h3 className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest mb-6">Real-Time Detection Pipeline</h3>
       
       <div className="relative">
         {/* Background Line */}
-        <div className="absolute top-4 left-[5%] right-[5%] h-[2px] bg-white/[0.05]" />
+        <div className="absolute top-4 left-[5%] right-[5%] h-[2px] bg-neutral-100 dark:bg-white/[0.05]" />
         
         {/* Progress Line */}
         <div 
@@ -92,12 +92,12 @@ export default function DetectionPipelineAnimation({ isScanning }: Props) {
               <div key={stage} className="flex flex-col items-center gap-3">
                 <div 
                   className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 bg-[#0d1117]",
+                    "w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 bg-white dark:bg-[#0d1117]",
                     isCompleted
-                      ? "border-emerald-500 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                      ? "border-emerald-500 text-emerald-500 dark:text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.1)]"
                       : isActive
-                      ? "border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] animate-pulse"
-                      : "border-white/10 text-neutral-600"
+                      ? "border-cyan-500 text-cyan-600 dark:text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.2)] animate-pulse"
+                      : "border-neutral-200 dark:border-white/10 text-neutral-400 dark:text-neutral-600"
                   )}
                 >
                   {isCompleted ? (
@@ -109,9 +109,9 @@ export default function DetectionPipelineAnimation({ isScanning }: Props) {
                 <span 
                   className={cn(
                     "text-[8px] sm:text-[9px] font-mono uppercase tracking-wider transition-colors duration-300",
-                    isCompleted ? "text-neutral-300" :
-                    isActive ? "text-cyan-400" :
-                    "text-neutral-600"
+                    isCompleted ? "text-neutral-500 dark:text-neutral-300" :
+                    isActive ? "text-cyan-600 dark:text-cyan-400" :
+                    "text-neutral-400 dark:text-neutral-600"
                   )}
                 >
                   {stage}

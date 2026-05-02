@@ -63,7 +63,8 @@ export default function RiskGauge({ score, severity, size = 180, className, anim
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.06)"
+          stroke="currentColor"
+          className="text-neutral-200 dark:text-white/[0.06]"
           strokeWidth={strokeWidth}
         />
         {/* Glow layer */}
@@ -96,7 +97,7 @@ export default function RiskGauge({ score, severity, size = 180, className, anim
 
       {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl font-black text-white tracking-tighter">{displayScore}</span>
+        <span className="text-4xl font-black text-neutral-900 dark:text-white tracking-tighter">{displayScore}</span>
         <span className={cn('text-[10px] font-mono uppercase tracking-widest mt-1', colors.text)}>
           {severity}
         </span>

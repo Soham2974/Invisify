@@ -117,12 +117,12 @@ export default function ScannerPage() {
             <Terminal size={12} className="text-emerald-500" />
             <span className="text-[10px] font-mono text-emerald-500/60 uppercase tracking-widest">Diagnostic System // Active</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Forensic Scanner</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Forensic Scanner</h1>
           <p className="text-xs text-neutral-500 mt-0.5">Analyze text, images, and emoji for hidden steganographic content</p>
         </div>
         <button
           onClick={() => { form.reset(); setResult(null); setImagePreview(null); setImageFileName(''); }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.06] transition-all text-xs font-mono"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-100 dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.06] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-white/[0.06] transition-all text-xs font-mono"
         >
           <RefreshCw size={12} /> Reset Session
         </button>
@@ -149,8 +149,8 @@ export default function ScannerPage() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Input Panel */}
         <div className="xl:col-span-7">
-          <div className="rounded-2xl border border-white/[0.06] bg-[#0d1117]/80 backdrop-blur-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-white/[0.06] flex items-center gap-2">
+          <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl overflow-hidden shadow-sm">
+            <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/[0.06] flex items-center gap-2">
               <ScanSearch size={14} className="text-cyan-500" />
               <span className="text-xs font-mono text-neutral-400 uppercase tracking-widest">Input Stream</span>
             </div>
@@ -166,9 +166,9 @@ export default function ScannerPage() {
                     placeholder={imagePreview ? 'Input locked for image analysis...' : 'Enter text, hex, or unicode for analysis...'}
                     disabled={!!imagePreview}
                     className={cn(
-                      'w-full min-h-[220px] bg-black/40 border border-white/[0.08] rounded-xl p-4 font-mono text-sm text-neutral-300',
+                      'w-full min-h-[220px] bg-neutral-50 dark:bg-black/40 border border-neutral-200 dark:border-white/[0.08] rounded-xl p-4 font-mono text-sm text-neutral-800 dark:text-neutral-300',
                       'focus:outline-none focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20 transition-all resize-none',
-                      'placeholder:text-neutral-700',
+                      'placeholder:text-neutral-400 dark:placeholder:text-neutral-700',
                       imagePreview && 'opacity-30'
                     )}
                     onChange={(e) => {
@@ -194,8 +194,8 @@ export default function ScannerPage() {
                 <div
                   onClick={() => document.getElementById('soc-imageInput')?.click()}
                   className={cn(
-                    'flex-1 border border-dashed border-white/[0.08] rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer',
-                    'hover:bg-white/[0.02] hover:border-emerald-500/20 transition-all',
+                    'flex-1 border border-dashed border-neutral-200 dark:border-white/[0.08] rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer',
+                    'hover:bg-neutral-50 dark:hover:bg-white/[0.02] hover:border-emerald-500/20 transition-all',
                     imagePreview && 'border-emerald-500/30 bg-emerald-500/[0.03]'
                   )}
                 >
@@ -257,8 +257,8 @@ export default function ScannerPage() {
 
         {/* Results Panel */}
         <div className="xl:col-span-5">
-          <div className="rounded-2xl border border-white/[0.06] bg-[#0d1117]/80 backdrop-blur-xl overflow-hidden h-full">
-            <div className="px-6 py-4 border-b border-white/[0.06] flex items-center gap-2">
+          <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl overflow-hidden h-full shadow-sm">
+            <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/[0.06] flex items-center gap-2">
               <ShieldAlert size={14} className="text-amber-500" />
               <span className="text-xs font-mono text-neutral-400 uppercase tracking-widest">Analysis Results</span>
             </div>

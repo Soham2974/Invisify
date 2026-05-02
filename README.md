@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.png" width="200" alt="Sentinel Prime Logo" />
+</p>
+
 # 🛡️ SENTINEL PRIME (INVISIFY)
 
 Sentinel Prime (branded "INVISIFY") is a powerful forensic steganography detection platform designed to find hidden data concealed inside text, emoji sequences, and images. It operates as an "antivirus for invisible data", scanning content for secret payloads that humans cannot see but computers can exploit.

@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { ScanResult, Severity } from '@/lib/types';
 import SeverityBadge from './severity-badge';
-import { AlertTriangle, Eye, Flag, X, ChevronDown } from 'lucide-react';
+import { AlertTriangle, Eye, Flag, X } from 'lucide-react';
 
 interface AlertListProps {
   scans: ScanResult[];
@@ -31,12 +31,14 @@ export default function AlertList({ scans }: AlertListProps) {
   return (
     <div className="space-y-6">
       {/* Alert Summary */}
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <button
           onClick={() => setSeverityFilter('ALL')}
           className={cn(
             'px-4 py-2 rounded-xl text-xs font-mono border transition-all',
-            severityFilter === 'ALL' ? 'bg-white/[0.08] border-white/[0.1] text-white' : 'bg-white/[0.02] border-white/[0.04] text-neutral-500 hover:text-neutral-300'
+            severityFilter === 'ALL' 
+              ? 'bg-neutral-900 dark:bg-white/[0.08] border-neutral-800 dark:border-white/[0.1] text-white' 
+              : 'bg-neutral-50 dark:bg-white/[0.02] border-neutral-200 dark:border-white/[0.04] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 shadow-sm'
           )}
         >
           All ({criticalCount + highCount + mediumCount})
@@ -45,7 +47,9 @@ export default function AlertList({ scans }: AlertListProps) {
           onClick={() => setSeverityFilter('Critical')}
           className={cn(
             'px-4 py-2 rounded-xl text-xs font-mono border transition-all',
-            severityFilter === 'Critical' ? 'bg-red-500/15 border-red-500/30 text-red-400' : 'bg-white/[0.02] border-white/[0.04] text-neutral-500 hover:text-neutral-300'
+            severityFilter === 'Critical' 
+              ? 'bg-red-500/15 border-red-500/30 text-red-600 dark:text-red-400' 
+              : 'bg-neutral-50 dark:bg-white/[0.02] border-neutral-200 dark:border-white/[0.04] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 shadow-sm'
           )}
         >
           Critical ({criticalCount})
@@ -54,7 +58,9 @@ export default function AlertList({ scans }: AlertListProps) {
           onClick={() => setSeverityFilter('High')}
           className={cn(
             'px-4 py-2 rounded-xl text-xs font-mono border transition-all',
-            severityFilter === 'High' ? 'bg-rose-500/15 border-rose-500/30 text-rose-400' : 'bg-white/[0.02] border-white/[0.04] text-neutral-500 hover:text-neutral-300'
+            severityFilter === 'High' 
+              ? 'bg-rose-500/15 border-rose-500/30 text-rose-600 dark:text-rose-400' 
+              : 'bg-neutral-50 dark:bg-white/[0.02] border-neutral-200 dark:border-white/[0.04] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 shadow-sm'
           )}
         >
           High ({highCount})
@@ -63,7 +69,9 @@ export default function AlertList({ scans }: AlertListProps) {
           onClick={() => setSeverityFilter('Medium')}
           className={cn(
             'px-4 py-2 rounded-xl text-xs font-mono border transition-all',
-            severityFilter === 'Medium' ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' : 'bg-white/[0.02] border-white/[0.04] text-neutral-500 hover:text-neutral-300'
+            severityFilter === 'Medium' 
+              ? 'bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400' 
+              : 'bg-neutral-50 dark:bg-white/[0.02] border-neutral-200 dark:border-white/[0.04] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 shadow-sm'
           )}
         >
           Medium ({mediumCount})
@@ -76,24 +84,24 @@ export default function AlertList({ scans }: AlertListProps) {
           <div
             key={alert.id}
             className={cn(
-              'rounded-2xl border p-5 transition-all hover:border-white/[0.1] group',
-              alert.severity === 'Critical' ? 'bg-red-500/[0.03] border-red-500/10' :
-              alert.severity === 'High' ? 'bg-rose-500/[0.03] border-rose-500/10' :
-              'bg-amber-500/[0.03] border-amber-500/10'
+              'rounded-2xl border p-5 transition-all hover:border-neutral-300 dark:hover:border-white/[0.1] group shadow-sm',
+              alert.severity === 'Critical' ? 'bg-red-500/[0.03] border-red-500/20 dark:border-red-500/10' :
+              alert.severity === 'High' ? 'bg-rose-500/[0.03] border-rose-500/20 dark:border-rose-500/10' :
+              'bg-amber-500/[0.03] border-amber-500/20 dark:border-amber-500/10'
             )}
           >
             <div className="flex items-start gap-4">
               {/* Severity Icon */}
               <div className={cn(
-                'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
+                'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner',
                 alert.severity === 'Critical' ? 'bg-red-500/10' :
                 alert.severity === 'High' ? 'bg-rose-500/10' :
                 'bg-amber-500/10'
               )}>
                 <AlertTriangle size={20} className={
-                  alert.severity === 'Critical' ? 'text-red-400 animate-pulse' :
-                  alert.severity === 'High' ? 'text-rose-400' :
-                  'text-amber-400'
+                  alert.severity === 'Critical' ? 'text-red-500 dark:text-red-400 animate-pulse' :
+                  alert.severity === 'High' ? 'text-rose-500 dark:text-rose-400' :
+                  'text-amber-500 dark:text-amber-400'
                 } />
               </div>
 
@@ -101,23 +109,23 @@ export default function AlertList({ scans }: AlertListProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <SeverityBadge severity={alert.severity} size="sm" />
-                  <span className="text-[10px] font-mono text-neutral-600">
+                  <span className="text-[10px] font-mono text-neutral-600 dark:text-neutral-600">
                     {alert.content_type} • Score: {alert.score}
                   </span>
-                  <span className="text-[10px] font-mono text-neutral-700 ml-auto">
+                  <span className="text-[10px] font-mono text-neutral-500 dark:text-neutral-700 ml-auto">
                     {new Date(alert.timestamp).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-sm text-neutral-300 leading-relaxed mb-2">{alert.summary}</p>
+                <p className="text-sm text-neutral-800 dark:text-neutral-300 leading-relaxed mb-2">{alert.summary}</p>
                 {alert.reasons.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {alert.reasons.slice(0, 3).map((r, i) => (
-                      <span key={i} className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06] text-neutral-500">
+                      <span key={i} className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.06] text-neutral-600 dark:text-neutral-500">
                         {r.length > 60 ? r.slice(0, 60) + '...' : r}
                       </span>
                     ))}
                     {alert.reasons.length > 3 && (
-                      <span className="text-[10px] font-mono text-neutral-600">+{alert.reasons.length - 3} more</span>
+                      <span className="text-[10px] font-mono text-neutral-500 dark:text-neutral-600">+{alert.reasons.length - 3} more</span>
                     )}
                   </div>
                 )}
@@ -125,15 +133,15 @@ export default function AlertList({ scans }: AlertListProps) {
 
               {/* Actions */}
               <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="p-1.5 rounded-lg hover:bg-white/[0.06] text-neutral-600 hover:text-neutral-300 transition-colors" title="View Details">
+                <button className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-300 transition-colors" title="View Details">
                   <Eye size={14} />
                 </button>
-                <button className="p-1.5 rounded-lg hover:bg-white/[0.06] text-neutral-600 hover:text-amber-400 transition-colors" title="Mark False Positive">
+                <button className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Mark False Positive">
                   <Flag size={14} />
                 </button>
                 <button
                   onClick={() => setDismissed((prev) => new Set([...prev, alert.id]))}
-                  className="p-1.5 rounded-lg hover:bg-white/[0.06] text-neutral-600 hover:text-rose-400 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                   title="Dismiss"
                 >
                   <X size={14} />
@@ -144,8 +152,8 @@ export default function AlertList({ scans }: AlertListProps) {
         ))}
 
         {alerts.length === 0 && (
-          <div className="text-center py-16 text-neutral-600">
-            <AlertTriangle size={32} className="mx-auto mb-3 text-neutral-700" />
+          <div className="text-center py-16 text-neutral-500 dark:text-neutral-600">
+            <AlertTriangle size={32} className="mx-auto mb-3 text-neutral-300 dark:text-neutral-700" />
             <p className="text-sm font-mono">NO_ACTIVE_ALERTS</p>
             <p className="text-[10px] mt-1">All threats have been reviewed or dismissed</p>
           </div>

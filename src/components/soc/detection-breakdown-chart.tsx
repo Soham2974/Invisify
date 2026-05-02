@@ -24,9 +24,9 @@ interface DetectionBreakdownChartProps {
 const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#0d1117] border border-white/10 rounded-xl px-4 py-3 shadow-2xl">
-      <p className="text-xs text-neutral-400 font-mono uppercase mb-1">{payload[0].name}</p>
-      <p className="text-lg font-bold text-white">{payload[0].value} <span className="text-xs text-neutral-500">detections</span></p>
+    <div className="bg-white/95 dark:bg-[#0d1117]/95 border border-neutral-200 dark:border-white/10 rounded-xl px-4 py-3 shadow-2xl backdrop-blur-md">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400 font-mono uppercase mb-1">{payload[0].name}</p>
+      <p className="text-lg font-bold text-neutral-900 dark:text-white">{payload[0].value} <span className="text-xs text-neutral-500">detections</span></p>
     </div>
   );
 };

@@ -97,13 +97,13 @@ export default function IntelligencePage() {
           <Brain size={12} className="text-purple-500" />
           <span className="text-[10px] font-mono text-purple-500/60 uppercase tracking-widest">Intelligence Database</span>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Threat Intelligence</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Threat Intelligence</h1>
         <p className="text-xs text-neutral-500 mt-0.5">Detection methods, threat taxonomy, and system capabilities</p>
       </div>
 
       {/* Cascade Pipeline */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0d1117]/80 backdrop-blur-xl p-6">
-        <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+      <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl p-6 shadow-sm">
+        <h2 className="text-sm font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2">
           <Zap size={14} className="text-emerald-500" /> 3-Tier Cascade Detection Pipeline
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -117,7 +117,7 @@ export default function IntelligencePage() {
                 <span className={cn('text-[10px] font-mono font-bold uppercase tracking-widest', colorMap[t.color].text)}>{t.tier}</span>
                 <span className="text-[9px] font-mono text-neutral-700 ml-auto">{t.time}</span>
               </div>
-              <p className="text-sm font-bold text-white mb-1">{t.name}</p>
+              <p className="text-sm font-bold text-neutral-900 dark:text-white mb-1">{t.name}</p>
               <p className="text-[11px] text-neutral-500 leading-relaxed">{t.desc}</p>
               {i < 2 && (
                 <div className="hidden md:flex items-center justify-end mt-2">
@@ -131,7 +131,7 @@ export default function IntelligencePage() {
 
       {/* Detection Methods */}
       <div>
-        <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+        <h2 className="text-sm font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2">
           <Target size={14} className="text-cyan-500" /> Detection Methods
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -145,7 +145,7 @@ export default function IntelligencePage() {
                     <Icon size={20} className={c.text} />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-sm font-bold text-white">{method.title}</h3>
+                    <h3 className="text-sm font-bold text-neutral-900 dark:text-white">{method.title}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[9px] font-mono text-neutral-600 uppercase">{method.tier}</span>
                       <span className="text-[9px] font-mono text-neutral-700">•</span>
@@ -171,14 +171,14 @@ export default function IntelligencePage() {
       </div>
 
       {/* Threat Taxonomy */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0d1117]/80 backdrop-blur-xl p-6">
-        <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+      <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl p-6 shadow-sm">
+        <h2 className="text-sm font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2">
           <ShieldAlert size={14} className="text-rose-500" /> Threat Taxonomy
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {THREAT_TAXONOMY.map((cat, i) => (
-            <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.01] p-4">
-              <h3 className="text-xs font-bold text-white mb-2">{cat.category}</h3>
+            <div key={i} className="rounded-xl border border-neutral-100 dark:border-white/[0.06] bg-neutral-50 dark:bg-white/[0.01] p-4">
+              <h3 className="text-xs font-bold text-neutral-900 dark:text-white mb-2">{cat.category}</h3>
               <div className="space-y-1">
                 {cat.threats.map((threat, j) => (
                   <div key={j} className="flex items-center gap-2">
@@ -193,8 +193,8 @@ export default function IntelligencePage() {
       </div>
 
       {/* Confidence Weights */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0d1117]/80 backdrop-blur-xl p-6">
-        <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+      <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl p-6 shadow-sm">
+        <h2 className="text-sm font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2">
           <Cpu size={14} className="text-cyan-500" /> Ensemble Confidence Weights
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -207,10 +207,10 @@ export default function IntelligencePage() {
             { name: 'Semantic AI', weight: 0.9 },
             { name: 'ML Ensemble', weight: 1.4 },
           ].map((w, i) => (
-            <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <div key={i} className="rounded-xl border border-neutral-100 dark:border-white/[0.06] bg-neutral-50 dark:bg-white/[0.02] p-3">
               <p className="text-[10px] font-mono text-neutral-600 uppercase mb-1">{w.name}</p>
               <div className="flex items-end gap-1">
-                <span className="text-xl font-bold text-white">{w.weight}</span>
+                <span className="text-xl font-bold text-neutral-900 dark:text-white">{w.weight}</span>
                 <span className="text-[9px] text-neutral-700 mb-0.5">×</span>
               </div>
               <div className="w-full h-1 rounded-full bg-white/[0.04] mt-2 overflow-hidden">

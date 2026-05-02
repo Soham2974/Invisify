@@ -50,11 +50,11 @@ export default function HistoryPage() {
             <Database size={12} className="text-blue-500" />
             <span className="text-[10px] font-mono text-blue-500/60 uppercase tracking-widest">Archive System</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Scan History</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Scan History</h1>
           <p className="text-xs text-neutral-500 mt-0.5">Complete forensic scan archive with filtering and export</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-neutral-500 hover:text-neutral-300 transition-all text-xs font-mono">
+          <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-100 dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.06] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-all text-xs font-mono shadow-sm">
             <Download size={12} /> Export CSV
           </button>
           <button
@@ -67,7 +67,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0d1117]/80 backdrop-blur-xl p-4">
+      <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <Filter size={12} className="text-neutral-600" />
@@ -78,7 +78,7 @@ export default function HistoryPage() {
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value as Severity | 'ALL')}
-            className="bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs font-mono text-neutral-400 focus:outline-none focus:border-emerald-500/30"
+            className="bg-neutral-50 dark:bg-black/40 border border-neutral-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 text-xs font-mono text-neutral-600 dark:text-neutral-400 focus:outline-none focus:border-emerald-500/30"
           >
             <option value="ALL">All Severities</option>
             <option value="Safe">Safe</option>
@@ -92,7 +92,7 @@ export default function HistoryPage() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as ContentType | 'ALL')}
-            className="bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs font-mono text-neutral-400 focus:outline-none focus:border-emerald-500/30"
+            className="bg-neutral-50 dark:bg-black/40 border border-neutral-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 text-xs font-mono text-neutral-600 dark:text-neutral-400 focus:outline-none focus:border-emerald-500/30"
           >
             <option value="ALL">All Types</option>
             <option value="Text">Text</option>
@@ -108,7 +108,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0d1117]/80 backdrop-blur-xl overflow-hidden">
+      <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl overflow-hidden shadow-sm">
         <ScanHistoryTable scans={filtered} pageSize={12} />
       </div>
     </div>

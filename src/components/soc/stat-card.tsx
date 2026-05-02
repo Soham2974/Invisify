@@ -28,15 +28,15 @@ export default function StatCard({ title, value, subtitle, icon, trend, accentCo
   return (
     <div
       className={cn(
-        'relative rounded-2xl border border-white/[0.06] overflow-hidden',
-        'hover:border-white/[0.1] transition-all duration-300 group',
+        'relative rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden',
+        'hover:border-neutral-300 dark:hover:border-white/[0.1] transition-all duration-300 group',
         c.glow,
         className
       )}
     >
       {/* Card gradient background */}
       <div className={cn('absolute inset-0 bg-gradient-to-br to-transparent', c.gradient)} />
-      <div className="absolute inset-0 bg-[#0a0f18]/90" />
+      <div className="absolute inset-0 bg-white/90 dark:bg-[#0a0f18]/90 transition-colors duration-300" />
 
       <div className="relative z-10 p-5">
         <div className="flex items-start justify-between mb-3">
@@ -49,7 +49,7 @@ export default function StatCard({ title, value, subtitle, icon, trend, accentCo
         </div>
 
         <div className="flex items-end gap-3">
-          <span className="text-3xl font-black tracking-tight text-white">{value}</span>
+          <span className="text-3xl font-black tracking-tight text-neutral-900 dark:text-white">{value}</span>
           {trend && (
             <span className={cn('text-[11px] font-mono font-semibold mb-1', trend.value >= 0 ? c.trendUp : c.trendDown)}>
               {trend.value >= 0 ? '↑' : '↓'} {Math.abs(trend.value)}% {trend.label}

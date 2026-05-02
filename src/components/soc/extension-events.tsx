@@ -10,16 +10,16 @@ interface ExtensionEventsProps {
 }
 
 const ACTION_STYLES = {
-  allowed: { icon: ShieldCheck, color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'Allowed' },
-  warned:  { icon: ShieldAlert, color: 'text-amber-400',   bg: 'bg-amber-500/10',   label: 'Warned' },
-  blocked: { icon: ShieldX,     color: 'text-rose-400',    bg: 'bg-rose-500/10',     label: 'Blocked' },
+  allowed: { icon: ShieldCheck, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10', label: 'Allowed' },
+  warned:  { icon: ShieldAlert, color: 'text-amber-600 dark:text-amber-400',   bg: 'bg-amber-500/10',   label: 'Warned' },
+  blocked: { icon: ShieldX,     color: 'text-rose-600 dark:text-rose-400',    bg: 'bg-rose-500/10',     label: 'Blocked' },
 };
 
 export default function ExtensionEventsTable({ events }: ExtensionEventsProps) {
   if (events.length === 0) {
     return (
-      <div className="text-center py-16 text-neutral-600">
-        <Lock size={32} className="mx-auto mb-3 text-neutral-700" />
+      <div className="text-center py-16 text-neutral-500 dark:text-neutral-600">
+        <Lock size={32} className="mx-auto mb-3 text-neutral-200 dark:text-neutral-700" />
         <p className="text-sm font-mono">NO_EXTENSION_EVENTS</p>
         <p className="text-[10px] mt-1">Connect the Gmail extension to see scan events</p>
       </div>
@@ -30,14 +30,14 @@ export default function ExtensionEventsTable({ events }: ExtensionEventsProps) {
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-white/[0.06]">
-            <th className="text-left p-4 text-[10px] font-mono text-neutral-600 uppercase tracking-widest">Time</th>
-            <th className="text-left p-4 text-[10px] font-mono text-neutral-600 uppercase tracking-widest">Subject</th>
-            <th className="text-left p-4 text-[10px] font-mono text-neutral-600 uppercase tracking-widest">Sender</th>
-            <th className="text-left p-4 text-[10px] font-mono text-neutral-600 uppercase tracking-widest">Threat</th>
-            <th className="text-left p-4 text-[10px] font-mono text-neutral-600 uppercase tracking-widest">Score</th>
-            <th className="text-left p-4 text-[10px] font-mono text-neutral-600 uppercase tracking-widest">Action</th>
-            <th className="text-left p-4 text-[10px] font-mono text-neutral-600 uppercase tracking-widest">SHA-256</th>
+          <tr className="border-b border-neutral-100 dark:border-white/[0.06] bg-neutral-50/50 dark:bg-transparent">
+            <th className="text-left p-4 text-[10px] font-mono text-neutral-500 dark:text-neutral-600 uppercase tracking-widest">Time</th>
+            <th className="text-left p-4 text-[10px] font-mono text-neutral-500 dark:text-neutral-600 uppercase tracking-widest">Subject</th>
+            <th className="text-left p-4 text-[10px] font-mono text-neutral-500 dark:text-neutral-600 uppercase tracking-widest">Sender</th>
+            <th className="text-left p-4 text-[10px] font-mono text-neutral-500 dark:text-neutral-600 uppercase tracking-widest">Threat</th>
+            <th className="text-left p-4 text-[10px] font-mono text-neutral-500 dark:text-neutral-600 uppercase tracking-widest">Score</th>
+            <th className="text-left p-4 text-[10px] font-mono text-neutral-500 dark:text-neutral-600 uppercase tracking-widest">Action</th>
+            <th className="text-left p-4 text-[10px] font-mono text-neutral-500 dark:text-neutral-600 uppercase tracking-widest">SHA-256</th>
           </tr>
         </thead>
         <tbody>
@@ -46,24 +46,24 @@ export default function ExtensionEventsTable({ events }: ExtensionEventsProps) {
             const ActionIcon = action.icon;
 
             return (
-              <tr key={event.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
+              <tr key={event.id} className="border-b border-neutral-50 dark:border-white/[0.03] hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors group">
                 <td className="p-4">
                   <span className="text-xs font-mono text-neutral-500">
                     {new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </td>
                 <td className="p-4 max-w-[200px]">
-                  <span className="text-xs text-neutral-300 truncate block">{event.emailSubject}</span>
+                  <span className="text-xs text-neutral-800 dark:text-neutral-300 truncate block group-hover:text-neutral-900 dark:group-hover:text-white transition-colors">{event.emailSubject}</span>
                 </td>
                 <td className="p-4">
-                  <span className="text-xs text-neutral-500 font-mono">{event.sender}</span>
+                  <span className="text-xs text-neutral-600 dark:text-neutral-500 font-mono">{event.sender}</span>
                 </td>
                 <td className="p-4">
                   <span className={cn(
                     'text-[10px] font-mono px-2 py-0.5 rounded-md border',
                     event.threatType === 'None'
-                      ? 'bg-white/[0.03] border-white/[0.06] text-neutral-600'
-                      : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                      ? 'bg-neutral-100 dark:bg-white/[0.03] border-neutral-200 dark:border-white/[0.06] text-neutral-500 dark:text-neutral-600'
+                      : 'bg-amber-500/10 border-amber-500/30 dark:border-amber-500/20 text-amber-600 dark:text-amber-400'
                   )}>
                     {event.threatType}
                   </span>
@@ -72,13 +72,13 @@ export default function ExtensionEventsTable({ events }: ExtensionEventsProps) {
                   <SeverityBadge severity={event.severity} size="sm" />
                 </td>
                 <td className="p-4">
-                  <div className={cn('inline-flex items-center gap-1.5 px-2 py-1 rounded-lg', action.bg)}>
+                  <div className={cn('inline-flex items-center gap-1.5 px-2 py-1 rounded-lg shadow-sm', action.bg)}>
                     <ActionIcon size={12} className={action.color} />
                     <span className={cn('text-[10px] font-mono font-bold', action.color)}>{action.label}</span>
                   </div>
                 </td>
                 <td className="p-4">
-                  <span className="text-[10px] font-mono text-neutral-700">{event.fingerprint}</span>
+                  <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-700">{event.fingerprint}</span>
                 </td>
               </tr>
             );

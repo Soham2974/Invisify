@@ -10,6 +10,7 @@ import ScanHistoryTable from '@/components/soc/scan-history-table';
 import SeverityBadge from '@/components/soc/severity-badge';
 import { Activity, Shield, Zap, Clock, Radio, ArrowRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const DetectionBreakdownChart = dynamic(
   () => import('@/components/soc/detection-breakdown-chart'),
@@ -54,17 +55,22 @@ export default function SOCDashboardPage() {
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
             </div>
-            <span className="text-[11px] font-mono text-emerald-400/70 uppercase tracking-[0.2em]">Cascade Engine Active</span>
+            <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400/70 uppercase tracking-[0.2em]">Cascade Engine Active</span>
           </div>
-          <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-white via-white to-neutral-400 bg-clip-text text-transparent">
-            Threat Operations Center
-          </h1>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center overflow-hidden shadow-lg">
+              <Image src="/logo.png" alt="Logo" width={40} height={40} className="object-cover" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-500 dark:from-white dark:via-white dark:to-neutral-400 bg-clip-text text-transparent">
+              Threat Operations Center
+            </h1>
+          </div>
           <p className="text-sm text-neutral-500 font-medium">Real-time steganography detection & hidden threat analysis</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-100 dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.06] backdrop-blur-sm">
             <Clock size={13} className="text-neutral-500" />
-            <span className="text-[11px] font-mono text-neutral-400">{clockStr || '\u00A0'}</span>
+            <span className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400">{clockStr || '\u00A0'}</span>
           </div>
           <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500/[0.08] to-cyan-500/[0.05] border border-emerald-500/15">
             <Zap size={13} className="text-emerald-400" />
@@ -82,16 +88,16 @@ export default function SOCDashboardPage() {
       {/* ═══════════════════ LATEST SCAN + PIE CHART ═══════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Latest Scan Result — Hero Card */}
-        <div className="lg:col-span-7 relative rounded-2xl border border-white/[0.06] overflow-hidden group">
+        <div className="lg:col-span-7 relative rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden group">
           {/* Card gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#0d1117] to-emerald-950/10" />
+          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-emerald-50/30 dark:from-[#0d1117] dark:via-[#0d1117] dark:to-emerald-950/10" />
           <div className="relative">
-            <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/[0.06] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
                   <Shield size={14} className="text-emerald-400" />
                 </div>
-                <span className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">Latest Scan Result</span>
+                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Latest Scan Result</span>
               </div>
               {latestScan && <SeverityBadge severity={latestScan.severity} size="sm" />}
             </div>
@@ -110,19 +116,19 @@ export default function SOCDashboardPage() {
                           <div className="w-6 h-6 rounded-md bg-cyan-500/10 flex items-center justify-center">
                             <Radio size={11} className="text-cyan-400" />
                           </div>
-                          <span className="text-sm font-semibold text-white">{latestScan.content_type} Analysis</span>
+                          <span className="text-sm font-semibold text-neutral-900 dark:text-white">{latestScan.content_type} Analysis</span>
                         </div>
                       </div>
                       <div>
                         <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1.5">Confidence</p>
-                        <span className="text-sm font-semibold text-white">
+                        <span className="text-sm font-semibold text-neutral-900 dark:text-white">
                           {(() => { try { const f = JSON.parse(latestScan.findings); return `${((f.ensemble_confidence || 0) * 100).toFixed(0)}%`; } catch { return 'N/A'; } })()}
                         </span>
                       </div>
                     </div>
                     <div>
                       <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1.5">AI Summary</p>
-                      <p className="text-[13px] text-neutral-300/90 leading-relaxed">{latestScan.summary}</p>
+                      <p className="text-[13px] text-neutral-600 dark:text-neutral-300/90 leading-relaxed">{latestScan.summary}</p>
                     </div>
                     {latestScan.reasons.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
@@ -150,14 +156,14 @@ export default function SOCDashboardPage() {
         </div>
 
         {/* Detection Breakdown — Donut Chart */}
-        <div className="lg:col-span-5 rounded-2xl border border-white/[0.06] overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#0d1117] to-purple-950/10" />
+        <div className="lg:col-span-5 rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-purple-50/30 dark:from-[#0d1117] dark:via-[#0d1117] dark:to-purple-950/10" />
           <div className="relative">
-            <div className="px-6 py-4 border-b border-white/[0.06] flex items-center gap-2.5">
+            <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/[0.06] flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
                 <Activity size={14} className="text-purple-400" />
               </div>
-              <span className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">Detection Breakdown</span>
+              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Detection Breakdown</span>
             </div>
             <div className="p-4 h-[300px]">
               <DetectionBreakdownChart scans={scans} />
@@ -168,14 +174,14 @@ export default function SOCDashboardPage() {
 
       {/* ═══════════════════ TIMELINE + ACTIVITY FEED ═══════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7 rounded-2xl border border-white/[0.06] overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#0d1117] to-cyan-950/10" />
+        <div className="lg:col-span-7 rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-cyan-50/30 dark:from-[#0d1117] dark:via-[#0d1117] dark:to-cyan-950/10" />
           <div className="relative">
-            <div className="px-6 py-4 border-b border-white/[0.06] flex items-center gap-2.5">
+            <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/[0.06] flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
                 <Activity size={14} className="text-cyan-400" />
               </div>
-              <span className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">Threat Score Timeline</span>
+              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Threat Score Timeline</span>
             </div>
             <div className="p-4 h-[300px]">
               <ScanTimelineChart scans={scans} />
@@ -183,15 +189,15 @@ export default function SOCDashboardPage() {
           </div>
         </div>
 
-        <div className="lg:col-span-5 rounded-2xl border border-white/[0.06] overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#0d1117] to-amber-950/10" />
+        <div className="lg:col-span-5 rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-amber-50/30 dark:from-[#0d1117] dark:via-[#0d1117] dark:to-amber-950/10" />
           <div className="relative">
-            <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/[0.06] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
                   <Zap size={14} className="text-amber-400" />
                 </div>
-                <span className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">Live Activity</span>
+                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Live Activity</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -206,15 +212,15 @@ export default function SOCDashboardPage() {
       </div>
 
       {/* ═══════════════════ SCAN HISTORY TABLE ═══════════════════ */}
-      <div className="rounded-2xl border border-white/[0.06] overflow-hidden relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#0d1117] to-[#0d1117]" />
+      <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-white dark:from-[#0d1117] dark:via-[#0d1117] dark:to-[#0d1117]" />
         <div className="relative">
-          <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/[0.06] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
                 <Clock size={14} className="text-neutral-400" />
               </div>
-              <span className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">Scan History</span>
+              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Scan History</span>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-mono text-neutral-600">{scans.length} records</span>
@@ -228,7 +234,7 @@ export default function SOCDashboardPage() {
       </div>
 
       {/* ═══════════════════ FOOTER ═══════════════════ */}
-      <div className="flex items-center justify-between text-[9px] font-mono text-neutral-700/60 py-3 border-t border-white/[0.03]">
+      <div className="flex items-center justify-between text-[9px] font-mono text-neutral-400 dark:text-neutral-700/60 py-3 border-t border-neutral-200 dark:border-white/[0.03]">
         <div className="flex items-center gap-5">
           <span className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />ENGINE ONLINE

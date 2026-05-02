@@ -41,7 +41,7 @@ const RenderValue = ({ value, depth = 0 }: { value: any, depth?: number }) => {
     const [isOpen, setIsOpen] = React.useState(false);
 
     if (value === null || value === undefined) {
-        return <span className="text-neutral-600 italic text-[10px] font-mono">NULL</span>;
+        return <span className="text-neutral-500 dark:text-neutral-600 italic text-[10px] font-mono">NULL</span>;
     }
 
     if (typeof value === 'boolean') {
@@ -51,8 +51,8 @@ const RenderValue = ({ value, depth = 0 }: { value: any, depth?: number }) => {
                 className={cn(
                     "gap-1 px-2 py-0.5 font-mono text-[10px] uppercase tracking-tighter",
                     value
-                        ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                        : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                 )}
             >
                 {value ? <AlertCircle className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
@@ -68,22 +68,22 @@ const RenderValue = ({ value, depth = 0 }: { value: any, depth?: number }) => {
                     href={value}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 hover:underline break-all inline-flex items-center gap-1 font-mono text-[10px]"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 hover:underline break-all inline-flex items-center gap-1 font-mono text-[10px]"
                 >
                     <FileText className="w-3 h-3" />
                     EXT_LINK
                 </a>
             );
         }
-        return <span className="break-all font-mono text-[11px] text-neutral-300 tracking-tight leading-relaxed">{value}</span>;
+        return <span className="break-all font-mono text-[11px] text-neutral-800 dark:text-neutral-300 tracking-tight leading-relaxed">{value}</span>;
     }
 
     if (Array.isArray(value)) {
-        if (value.length === 0) return <span className="text-neutral-700 font-mono text-[10px]">[]</span>;
+        if (value.length === 0) return <span className="text-neutral-400 dark:text-neutral-700 font-mono text-[10px]">[]</span>;
         return (
             <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
                 <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-6 p-0 hover:bg-transparent text-neutral-500 hover:text-neutral-300">
+                    <Button variant="ghost" size="sm" className="h-6 p-0 hover:bg-transparent text-neutral-500 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300">
                         {isOpen ? <ChevronDown className="w-3 h-3 mr-1" /> : <ChevronRight className="w-3 h-3 mr-1" />}
                         <span className="text-[10px] font-mono flex items-center gap-1 uppercase">
                             <List className="w-3 h-3" />
@@ -91,7 +91,7 @@ const RenderValue = ({ value, depth = 0 }: { value: any, depth?: number }) => {
                         </span>
                     </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="pl-4 mt-2 space-y-1.5 border-l border-white/5">
+                <CollapsibleContent className="pl-4 mt-2 space-y-1.5 border-l border-neutral-200 dark:border-white/5">
                     {value.map((item, index) => (
                         <div key={index} className="text-xs">
                             <RenderValue value={item} depth={depth + 1} />
@@ -103,12 +103,12 @@ const RenderValue = ({ value, depth = 0 }: { value: any, depth?: number }) => {
     }
 
     if (typeof value === 'object') {
-        if (Object.keys(value).length === 0) return <span className="text-neutral-700 font-mono text-[10px]">{ }</span>;
+        if (Object.keys(value).length === 0) return <span className="text-neutral-400 dark:text-neutral-700 font-mono text-[10px]">{ }</span>;
 
         return (
             <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
                 <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-6 p-0 hover:bg-transparent text-neutral-500 hover:text-neutral-300">
+                    <Button variant="ghost" size="sm" className="h-6 p-0 hover:bg-transparent text-neutral-500 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300">
                         {isOpen ? <ChevronDown className="w-3 h-3 mr-1" /> : <ChevronRight className="w-3 h-3 mr-1" />}
                         <span className="text-[10px] font-mono flex items-center gap-1 uppercase">
                             <Binary className="w-3 h-3" />
@@ -116,12 +116,12 @@ const RenderValue = ({ value, depth = 0 }: { value: any, depth?: number }) => {
                         </span>
                     </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2 text-sm bg-black/40 rounded-xl border border-white/5 overflow-hidden">
+                <CollapsibleContent className="mt-2 text-sm bg-neutral-50 dark:bg-black/40 rounded-xl border border-neutral-200 dark:border-white/5 overflow-hidden">
                     <Table>
                         <TableBody>
                             {Object.entries(value).map(([k, v]) => (
-                                <TableRow key={k} className="hover:bg-white/5 border-white/5 last:border-0">
-                                    <TableCell className="py-2 px-3 align-top font-mono text-[10px] uppercase text-neutral-500 w-[120px]">
+                                <TableRow key={k} className="hover:bg-neutral-100 dark:hover:bg-white/5 border-neutral-100 dark:border-white/5 last:border-0">
+                                    <TableCell className="py-2 px-3 align-top font-mono text-[10px] uppercase text-neutral-500 dark:text-neutral-500 w-[120px]">
                                         {formatKey(k)}
                                     </TableCell>
                                     <TableCell className="py-2 px-3 align-top">
@@ -144,7 +144,7 @@ export function FindingsTable({ data, className }: FindingsTableProps) {
 
     if (typeof parsedData !== 'object' || parsedData === null) {
         return (
-            <div className="p-4 border border-white/5 bg-black/40 rounded-2xl font-mono text-[11px] text-neutral-400">
+            <div className="p-4 border border-neutral-200 dark:border-white/5 bg-neutral-50 dark:bg-black/40 rounded-2xl font-mono text-[11px] text-neutral-600 dark:text-neutral-400">
                 {String(parsedData)}
             </div>
         )
@@ -157,12 +157,12 @@ export function FindingsTable({ data, className }: FindingsTableProps) {
             {entries.map(([key, value]) => {
                 const isComplex = typeof value === 'object' && value !== null;
                 return (
-                    <div key={key} className="overflow-hidden rounded-2xl border border-white/5 bg-black/20 backdrop-blur-sm">
-                        <div className="py-2 px-4 bg-white/5 border-b border-white/5 flex items-center gap-3">
-                            <div className="text-neutral-500">
+                    <div key={key} className="overflow-hidden rounded-2xl border border-neutral-200 dark:border-white/5 bg-white dark:bg-black/20 backdrop-blur-sm shadow-sm">
+                        <div className="py-2 px-4 bg-neutral-50 dark:bg-white/5 border-b border-neutral-100 dark:border-white/5 flex items-center gap-3">
+                            <div className="text-neutral-400 dark:text-neutral-500">
                                 {isComplex ? <Binary size={12} /> : <Type size={12} />}
                             </div>
-                            <span className="text-[10px] font-mono font-bold tracking-widest text-neutral-500 uppercase">
+                            <span className="text-[10px] font-mono font-bold tracking-widest text-neutral-500 dark:text-neutral-500 uppercase">
                                 {formatKey(key)}
                             </span>
                         </div>
@@ -171,8 +171,8 @@ export function FindingsTable({ data, className }: FindingsTableProps) {
                                 <Table>
                                     <TableBody>
                                         {Object.entries(value).map(([k, v]) => (
-                                            <TableRow key={k} className="hover:bg-white/5 border-white/5 last:border-0 border-b">
-                                                <TableCell className="w-[200px] py-3 px-4 font-mono text-[10px] uppercase text-neutral-500 bg-white/5">
+                                            <TableRow key={k} className="hover:bg-neutral-50 dark:hover:bg-white/5 border-neutral-100 dark:border-white/5 last:border-0 border-b">
+                                                <TableCell className="w-[200px] py-3 px-4 font-mono text-[10px] uppercase text-neutral-500 dark:text-neutral-500 bg-neutral-50/50 dark:bg-white/5">
                                                     {formatKey(k)}
                                                 </TableCell>
                                                 <TableCell className="py-3 px-4">

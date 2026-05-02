@@ -3,6 +3,7 @@ import * as emoji from './emoji';
 import * as stegoveritas from './stegoveritas-detector';
 import { analyzeStego } from './steg-detector';
 import { semanticStegoCheck } from './semantic-scanner';
+import { detect_homoglyph_links } from './unicode';
 
 export type ContentType = 'Text' | 'Image' | 'Emoji';
 
@@ -16,17 +17,42 @@ export interface DetectionResults {
 }
 
 /**
- * Sentinel Prime: Detection Engine v5.0
+ * Sentinel Prime: Detection Engine v6.0 (Production Hardened)
  * 
- * Architecture: 3-Tier Cascade with Fisher's Combined Probability Ensemble
+ * Architecture: Weighted Signal Fusion + 3-Tier Cascade
  * 
- * Tier 1 — Deterministic: Zero-width, homoglyph, emoji pattern matching
- * Tier 2 — Statistical: Chi-square, RS, SPA, Shannon entropy, Markov, n-gram
- * Tier 3 — AI/Heuristic: Gemini semantic perplexity scoring
+ * Phase 1 — Weighted Signal Accumulation:
+ * Each detector contributes a specific weight to a cumulative risk score.
  * 
- * Scoring: Direct 0-100 accumulation. No normalization denominator.
- * Ensemble: Fisher's method combines independent p-values into a single test statistic.
+ * Phase 2 — Feature Fusion (Interaction Weighting):
+ * Correlated signals (e.g., Emoji + ZWSP) trigger score multipliers to reduce false negatives.
+ * 
+ * Phase 3 — Decision Gating:
+ * Weighted Score >= 40: Malicious (Medium/High/Critical depending on intensity)
+ * Weighted Score < 40: Probable Safe/Low
  */
+
+// Weight Configuration for Multi-Signal Fusion
+const WEIGHTS = {
+    ZWSP: 35,
+    ZWSP_VERIFIED: 50,
+    HOMOGLYPH: 25,
+    HOMOGLYPH_SKELETON: 30,
+    HOMOGLYPH_SPOOF: 40,
+    ENTROPY_HIGH: 25,
+    BASE64_PAYLOAD: 45,
+    SNOW: 15,
+    MARKOV_ANOMALY: 15,
+    PHISHING_URL: 45,
+    PHISHING_PATTERN: 35,
+    RANDOM_STRING: 30,
+    EMOJI_HIGH_RISK: 40,
+    EMOJI_MEDIUM_RISK: 20,
+    EMOJI_VERIFIED: 50,
+    AI_SEMANTIC_ANOMALY: 20,
+    NGRAM_DEVIATION: 15,
+    PERPLEXITY_HIGH: 15,
+};
 export class DetectionEngine {
 
     static async analyze(
@@ -67,18 +93,18 @@ export class DetectionEngine {
             detectorsTotal++;
             if (textResults.zero_width?.present) {
                 detectorsTriggered++;
-                score += 30;
+                score += WEIGHTS.ZWSP;
                 reasons.push('zero_width_characters_detected');
-                pValues.push(0.001); // Very strong evidence
+                pValues.push(0.001);
 
                 if (textResults.zero_width.verifiedPayload) {
-                    score += 40; // Verified payload = near-certain stego
+                    score += WEIGHTS.ZWSP_VERIFIED;
                     reasons.push('VERIFIED_HIDDEN_PAYLOAD_EXTRACTED');
                     pValues.push(0.0001);
                 }
 
                 if (textResults.zero_width.bidiAnomalies?.present) {
-                    score += 10;
+                    score += 15;
                     reasons.push('bidi_override_attack_detected');
                 }
             } else {
@@ -89,19 +115,19 @@ export class DetectionEngine {
             detectorsTotal++;
             if (textResults.homoglyphs?.present) {
                 detectorsTriggered++;
-                score += 25;
+                score += WEIGHTS.HOMOGLYPH;
                 reasons.push('homoglyph_characters_detected');
                 pValues.push(0.005);
 
                 if (textResults.homoglyphs.skeletalAnalysis?.suspicious) {
-                    score += 35; // Bumped to push intent-based phishing into "High Risk" (60%+)
+                    score += WEIGHTS.HOMOGLYPH_SKELETON;
                     reasons.push('homoglyph_skeleton_phishing_detected');
-                    pValues.push(0.001); // Increased p-value significance
+                    pValues.push(0.001);
                 }
                 if (textResults.homoglyphs.visualSpoofing?.detected) {
-                    score += 35; // Bumped to escalate IDN homograph attacks
+                    score += WEIGHTS.HOMOGLYPH_SPOOF;
                     reasons.push('visual_spoofing_attack_detected');
-                    pValues.push(0.0005); // High confidence spoof indicator
+                    pValues.push(0.0005);
                 }
             } else {
                 pValues.push(0.90);
@@ -109,26 +135,28 @@ export class DetectionEngine {
 
             // --- Shannon Entropy ---
             detectorsTotal++;
-            if (textResults.homoglyphs?.entropy?.suspicious) {
+            const hasSpaces = text_in.includes(' ');
+            const entropyVal = textResults.homoglyphs?.entropy?.score ?? 0;
+            // FP Guardrail: High entropy alone on short strings (< 12 chars) is often just random IDs/passwords
+            const isEntropySuspicious = textResults.homoglyphs?.entropy?.suspicious && !hasSpaces && text_in.length >= 12;
+            if (isEntropySuspicious) {
                 detectorsTriggered++;
-                score += 40; // Escalated from 10 to catch raw base64/encrypted short payloads
-                reasons.push(`high_character_entropy_detected_payload_risk (${textResults.homoglyphs.entropy.score.toFixed(2)})`);
-                pValues.push(0.005); // High confidence anomaly
+                score += WEIGHTS.ENTROPY_HIGH;
+                reasons.push(`high_character_entropy_detected_payload_risk (${entropyVal.toFixed(2)})`);
+                pValues.push(0.01);
             } else {
                 pValues.push(0.85);
             }
 
             // --- Base64 / Encoded Payload Check ---
             detectorsTotal++;
-            // Require EITHER: proper base64 padding with sufficient length,
-            // OR a high-density string that is very long AND has very high entropy.
-            // This prevents normal short passwords, slugs, or filenames from triggering.
             const strictBase64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)$/.test(text_in);
             const entropy = textResults.homoglyphs?.entropy?.score ?? 0;
             const isHighDensityLong = /^[A-Za-z0-9+/=]{16,}$/.test(text_in) && !text_in.includes(' ') && entropy > 3.8;
-            if ((strictBase64 && text_in.length >= 12) || isHighDensityLong) {
+            const isUnpaddedBase64 = /^[A-Za-z0-9+/]{16,}$/.test(text_in) && !text_in.includes(' ');
+            if ((strictBase64 && text_in.length >= 12) || isHighDensityLong || isUnpaddedBase64) {
                 detectorsTriggered++;
-                score += 40;
+                score += WEIGHTS.BASE64_PAYLOAD;
                 reasons.push('obfuscated_or_base64_payload_detected');
                 pValues.push(0.002);
             } else {
@@ -139,7 +167,7 @@ export class DetectionEngine {
             detectorsTotal++;
             if (textResults.homoglyphs?.snow?.detected) {
                 detectorsTriggered++;
-                score += 10;
+                score += WEIGHTS.SNOW;
                 reasons.push(...textResults.homoglyphs.snow.reasons);
                 pValues.push(0.02);
             } else {
@@ -148,29 +176,74 @@ export class DetectionEngine {
 
             // --- Markov Chain n-gram Analysis ---
             detectorsTotal++;
-            if (textResults.homoglyphs?.markovAnomaly?.suspicious) {
+            if (textResults.homoglyphs?.markovAnomaly?.suspicious && !hasSpaces && text_in.length > 20) {
                 detectorsTriggered++;
-                score += 10;
+                score += WEIGHTS.MARKOV_ANOMALY;
                 reasons.push('markov_bigram_anomaly_detected');
                 pValues.push(0.04);
             } else {
                 pValues.push(0.80);
             }
 
-            // ==========================================
-            // TIER 1: Emoji-Specific Detection
-            // ==========================================
+            // --- Phishing URL Detection ---
+            detectorsTotal++;
+            const urlResults = detect_homoglyph_links(text_in);
+            if (urlResults.detected) {
+                detectorsTriggered++;
+                score += WEIGHTS.PHISHING_URL;
+                reasons.push(`phishing_url_detected (${urlResults.suspiciousLinks.map(l => l.decoded).join(', ')})`);
+                pValues.push(0.001);
+            } else {
+                pValues.push(0.90);
+            }
+
+            // --- Suspicious URL Pattern Detection ---
+            detectorsTotal++;
+            const urlMatch = text_in.match(/https?:\/\/[^\s]+/gi);
+            if (urlMatch) {
+                const suspiciousUrlPatterns = [
+                    /paypa[Il1]/i, /micros[0o]ft/i, /g[o0]{2}gle/i,
+                    /bank.*verification/i, /secure.*login.*alert/i, /account.*verif/i,
+                ];
+                const isPhishingUrl = urlMatch.some(url =>
+                    suspiciousUrlPatterns.some(pattern => pattern.test(url))
+                );
+                if (isPhishingUrl) {
+                    detectorsTriggered++;
+                    score += WEIGHTS.PHISHING_PATTERN;
+                    reasons.push('suspicious_phishing_url_pattern_detected');
+                    pValues.push(0.001);
+                } else {
+                    pValues.push(0.85);
+                }
+            }
+
+            // --- High-Entropy Random String Detection ---
+            detectorsTotal++;
+            const isRandomString = !hasSpaces && text_in.length >= 15 &&
+                /[A-Za-z]/.test(text_in) && /[0-9]/.test(text_in) &&
+                /[!@#$%^&*()_+\-={}\[\]:;"'<>?,./\\|`~]/.test(text_in) &&
+                entropy > 3.5;
+            if (isRandomString) {
+                detectorsTriggered++;
+                score += WEIGHTS.RANDOM_STRING;
+                reasons.push('high_entropy_random_string_detected');
+                pValues.push(0.005);
+            } else {
+                pValues.push(0.90);
+            }
+
+            // --- Emoji-Specific Detection ---
             detectorsTotal++;
             if (textResults.emoji_threats?.suspicious) {
                 detectorsTriggered++;
                 const emojiRisk = textResults.emoji_threats.riskScore || 0;
 
-                // EmojiEncode alphabet detection is definitive
                 if (emojiRisk >= 60) {
-                    score += 40;
+                    score += WEIGHTS.EMOJI_HIGH_RISK;
                     pValues.push(0.001);
                 } else if (emojiRisk >= 30) {
-                    score += 20;
+                    score += WEIGHTS.EMOJI_MEDIUM_RISK;
                     pValues.push(0.02);
                 } else {
                     score += 10;
@@ -179,7 +252,7 @@ export class DetectionEngine {
                 reasons.push(...textResults.emoji_threats.reasons);
 
                 if (textResults.emoji_threats.verifiedPayload) {
-                    score += 30;
+                    score += WEIGHTS.EMOJI_VERIFIED;
                     reasons.push('VERIFIED_EMOJI_STEGO_PAYLOAD');
                     pValues.push(0.0001);
                 }
@@ -187,8 +260,7 @@ export class DetectionEngine {
                 pValues.push(0.90);
             }
 
-            // ==========================================
-            // TIER 2: Statistical n-gram Frequency Deviation
+            // TIER 2: Statistical & N-gram Deviations
             // ==========================================
             detectorsTotal++;
             if (text_in.length > 30) {
@@ -196,7 +268,7 @@ export class DetectionEngine {
                 findings.ngram_forensics = ngramResult;
                 if (ngramResult.suspicious) {
                     detectorsTriggered++;
-                    score += 10;
+                    score += WEIGHTS.NGRAM_DEVIATION;
                     reasons.push(`ngram_frequency_deviation (dev=${ngramResult.deviation.toFixed(3)})`);
                     pValues.push(ngramResult.pValue);
                 } else {
@@ -204,21 +276,37 @@ export class DetectionEngine {
                 }
             }
 
-            // ==========================================
-            // TIER 2: Character-Level Perplexity (DistilBERT Equivalent)
-            // ==========================================
             detectorsTotal++;
             if (text_in.length > 40) {
                 const perplexity = this.characterPerplexity(text_in);
                 findings.perplexity_analysis = perplexity;
                 if (perplexity.suspicious) {
                     detectorsTriggered++;
-                    score += 12;
+                    score += WEIGHTS.PERPLEXITY_HIGH;
                     reasons.push(`high_character_perplexity (ppl=${perplexity.score.toFixed(1)})`);
                     pValues.push(perplexity.pValue);
                 } else {
                     pValues.push(0.85);
                 }
+            }
+
+            // ==========================================
+            // TIER 2.5: FEATURE FUSION (Interaction Weighting)
+            // ==========================================
+            // Multi-signal boost: if we see Emoji stego AND ZWSP in the same text
+            if (textResults.emoji_threats?.suspicious && textResults.zero_width?.present) {
+                score *= 1.25; // 25% boost for multi-channel obfuscation
+                reasons.push('FEATURE_FUSION: MULTI_CHANNEL_OBFUSCATION_BOOST');
+            }
+            // Multi-signal boost: Homoglyphs + Hidden Payload
+            if (textResults.homoglyphs?.present && (textResults.zero_width?.present || textResults.emoji_threats?.suspicious)) {
+                score += 15;
+                reasons.push('FEATURE_FUSION: DECEPTIVE_OBFUSCATION_COMBO');
+            }
+            // Entropy + Base64 fusion
+            if (isEntropySuspicious && isUnpaddedBase64) {
+                score += 10;
+                reasons.push('FEATURE_FUSION: HIGH_ENTROPY_PAYLOAD_CONFIRMED');
             }
 
             // ==========================================
@@ -231,7 +319,7 @@ export class DetectionEngine {
                     findings.semantic_ai = aiResult;
                     if (aiResult.isSuspicious) {
                         detectorsTriggered++;
-                        score += Math.min(20, Math.floor(aiResult.perplexityScore / 5));
+                        score += WEIGHTS.AI_SEMANTIC_ANOMALY;
                         reasons.push(`semantic_anomaly_detected (${aiResult.reason})`);
                         pValues.push(Math.max(0.001, 1 - aiResult.confidence));
                     } else {
@@ -690,7 +778,7 @@ export class DetectionEngine {
     private static getSeverity(score: number): 'Safe' | 'Low' | 'Medium' | 'High' | 'Critical' {
         if (score >= 85) return 'Critical';
         if (score >= 60) return 'High';
-        if (score >= 35) return 'Medium';
+        if (score >= 40) return 'Medium';
         if (score >= 15) return 'Low';
         return 'Safe';
     }
