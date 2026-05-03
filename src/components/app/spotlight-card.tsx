@@ -12,7 +12,7 @@ interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
 export default function SpotlightCard({
     children,
     className,
-    spotlightColor = 'rgba(97, 220, 163, 0.15)',
+    spotlightColor = 'rgba(0, 255, 178, 0.12)',
     ...props
 }: SpotlightCardProps) {
     const divRef = useRef<HTMLDivElement>(null);
@@ -43,18 +43,26 @@ export default function SpotlightCard({
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             className={cn(
-                'relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-neutral-900/50 to-neutral-950/50 p-6 backdrop-blur-sm',
+                'relative overflow-hidden rounded-2xl p-6',
+                'bg-[#060910]',
+                'border border-white/[0.03]',
+                'transition-all duration-300 ease-out',
+                'hover:border-white/[0.06] hover:-translate-y-1',
+                'shadow-[0_4px_12px_rgba(0,0,0,0.5)]',
                 className
             )}
             {...props}
         >
+            {/* Spotlight radial gradient */}
             <div
-                className="pointer-events-none absolute -inset-px transition duration-300"
+                className="pointer-events-none absolute -inset-px transition-opacity duration-500"
                 style={{
                     opacity,
                     background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 40%)`,
                 }}
             />
+            {/* Subtle top edge highlight */}
+            <div className="absolute top-0 left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
             <div className="relative z-10">{children}</div>
         </div>
     );

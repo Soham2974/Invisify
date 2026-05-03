@@ -34,7 +34,7 @@ export default function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          'font-body antialiased h-full flex flex-col bg-white dark:bg-black overflow-x-hidden p-0 m-0 transition-colors duration-300',
+          'font-body antialiased h-full flex flex-col bg-white dark:bg-cyber-bg overflow-x-hidden p-0 m-0 transition-colors duration-300',
           process.env.NODE_ENV === 'development' ? 'debug-screens' : ''
         )}
       >

@@ -109,7 +109,7 @@ export default function ScannerPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-6 lg:p-8 space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -117,12 +117,12 @@ export default function ScannerPage() {
             <Terminal size={12} className="text-emerald-500" />
             <span className="text-[10px] font-mono text-emerald-500/60 uppercase tracking-widest">Diagnostic System // Active</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Forensic Scanner</h1>
-          <p className="text-xs text-neutral-500 mt-0.5">Analyze text, images, and emoji for hidden steganographic content</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Forensic Scanner</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Analyze text, images, and emoji for hidden steganographic content</p>
         </div>
         <button
           onClick={() => { form.reset(); setResult(null); setImagePreview(null); setImageFileName(''); }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-100 dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.06] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-white/[0.06] transition-all text-xs font-mono"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] text-slate-500 hover:text-slate-700 dark:hover:text-neutral-300 hover:bg-slate-200 dark:hover:bg-white/[0.06] transition-all text-xs font-mono shadow-sm"
         >
           <RefreshCw size={12} /> Reset Session
         </button>
@@ -130,14 +130,14 @@ export default function ScannerPage() {
 
       {/* Quick Samples */}
       <div className="flex flex-wrap gap-2">
-        <span className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest self-center mr-2">Quick Samples:</span>
+        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest self-center mr-2">Quick Samples:</span>
         {QUICK_SAMPLES.map((qs) => {
           const Icon = qs.icon;
           return (
             <button
               key={qs.id}
               onClick={() => handleQuickSample(qs.sample)}
-              className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono border transition-all hover:scale-[1.02]', qs.color)}
+              className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono border transition-all hover:scale-[1.02] shadow-sm', qs.color)}
             >
               <Icon size={12} /> {qs.label}
             </button>
@@ -149,15 +149,15 @@ export default function ScannerPage() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Input Panel */}
         <div className="xl:col-span-7">
-          <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl overflow-hidden shadow-sm">
-            <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/[0.06] flex items-center gap-2">
+          <div className="glass-card overflow-hidden shadow-sm h-full">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center gap-2 bg-slate-50/50 dark:bg-transparent">
               <ScanSearch size={14} className="text-cyan-500" />
-              <span className="text-xs font-mono text-neutral-400 uppercase tracking-widest">Input Stream</span>
+              <span className="text-xs font-mono text-slate-400 uppercase tracking-widest">Input Stream</span>
             </div>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="p-6 space-y-5">
               {/* Text Input */}
               <div>
-                <label className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest block mb-2">
+                <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block mb-2">
                   Text / Unicode / Hex Payload
                 </label>
                 <div className="relative">
@@ -166,9 +166,9 @@ export default function ScannerPage() {
                     placeholder={imagePreview ? 'Input locked for image analysis...' : 'Enter text, hex, or unicode for analysis...'}
                     disabled={!!imagePreview}
                     className={cn(
-                      'w-full min-h-[220px] bg-neutral-50 dark:bg-black/40 border border-neutral-200 dark:border-white/[0.08] rounded-xl p-4 font-mono text-sm text-neutral-800 dark:text-neutral-300',
+                      'w-full min-h-[220px] bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/[0.08] rounded-xl p-4 font-mono text-sm text-slate-800 dark:text-neutral-300',
                       'focus:outline-none focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20 transition-all resize-none',
-                      'placeholder:text-neutral-400 dark:placeholder:text-neutral-700',
+                      'placeholder:text-slate-400 dark:placeholder:text-neutral-700',
                       imagePreview && 'opacity-30'
                     )}
                     onChange={(e) => {
@@ -176,7 +176,7 @@ export default function ScannerPage() {
                       if (e.target.value.trim() && imagePreview) clearImage();
                     }}
                   />
-                  <div className="absolute bottom-3 right-3 text-[9px] font-mono text-neutral-700">
+                  <div className="absolute bottom-3 right-3 text-[9px] font-mono text-slate-400">
                     CHR: {form.watch('textInput')?.length || 0}
                   </div>
                 </div>
@@ -184,9 +184,9 @@ export default function ScannerPage() {
 
               {/* Divider */}
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-white/[0.04]" />
-                <span className="text-[9px] font-mono text-neutral-700 uppercase">Multi-modal upload</span>
-                <div className="flex-1 h-px bg-white/[0.04]" />
+                <div className="flex-1 h-px bg-slate-100 dark:bg-white/[0.04]" />
+                <span className="text-[9px] font-mono text-slate-400 uppercase">Multi-modal upload</span>
+                <div className="flex-1 h-px bg-slate-100 dark:bg-white/[0.04]" />
               </div>
 
               {/* Image Upload + Submit */}
@@ -194,8 +194,8 @@ export default function ScannerPage() {
                 <div
                   onClick={() => document.getElementById('soc-imageInput')?.click()}
                   className={cn(
-                    'flex-1 border border-dashed border-neutral-200 dark:border-white/[0.08] rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer',
-                    'hover:bg-neutral-50 dark:hover:bg-white/[0.02] hover:border-emerald-500/20 transition-all',
+                    'flex-1 border border-dashed border-slate-300 dark:border-white/[0.08] rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer',
+                    'hover:bg-slate-50 dark:hover:bg-white/[0.02] hover:border-emerald-500/20 transition-all',
                     imagePreview && 'border-emerald-500/30 bg-emerald-500/[0.03]'
                   )}
                 >
@@ -212,22 +212,22 @@ export default function ScannerPage() {
                   {imagePreview ? (
                     <div className="flex flex-col items-center gap-2">
                       <div className="relative w-20 h-20">
-                        <img src={imagePreview} className="w-full h-full object-cover rounded-lg border border-white/10" alt="Preview" />
+                        <img src={imagePreview} className="w-full h-full object-cover rounded-lg border border-slate-200 dark:border-white/10" alt="Preview" />
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); clearImage(); }}
-                          className="absolute -top-2 -right-2 bg-rose-500 text-white p-1 rounded-full hover:bg-rose-600 transition-colors"
+                          className="absolute -top-2 -right-2 bg-rose-500 text-white p-1 rounded-full hover:bg-rose-600 transition-colors shadow-lg"
                         >
                           <RefreshCw size={8} />
                         </button>
                       </div>
-                      <span className="text-[10px] font-mono text-emerald-400">{imageFileName || 'image-uploaded'}</span>
+                      <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">{imageFileName || 'image-uploaded'}</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center gap-2 text-neutral-600">
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
                       <Upload size={20} />
-                      <span className="text-xs">Upload Image Payload</span>
-                      <span className="text-[9px] text-neutral-700">PNG, JPEG, GIF, BMP</span>
+                      <span className="text-xs font-medium">Upload Image Payload</span>
+                      <span className="text-[9px] uppercase tracking-tight">PNG, JPEG, GIF, BMP</span>
                     </div>
                   )}
                 </div>
@@ -238,7 +238,7 @@ export default function ScannerPage() {
                   className={cn(
                     'px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-sm transition-all',
                     'shadow-[0_0_30px_rgba(16,185,129,0.15)] hover:shadow-[0_0_50px_rgba(16,185,129,0.25)]',
-                    'disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center gap-1'
+                    'disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center gap-1 min-w-[140px]'
                   )}
                 >
                   {isLoading ? (
@@ -257,10 +257,10 @@ export default function ScannerPage() {
 
         {/* Results Panel */}
         <div className="xl:col-span-5">
-          <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl overflow-hidden h-full shadow-sm">
-            <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/[0.06] flex items-center gap-2">
+          <div className="glass-card overflow-hidden h-full shadow-sm">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center gap-2 bg-slate-50/50 dark:bg-transparent">
               <ShieldAlert size={14} className="text-amber-500" />
-              <span className="text-xs font-mono text-neutral-400 uppercase tracking-widest">Analysis Results</span>
+              <span className="text-xs font-mono text-slate-400 uppercase tracking-widest">Analysis Results</span>
             </div>
             <div className="p-6 space-y-6">
               {(isLoading || result) && (
@@ -269,12 +269,12 @@ export default function ScannerPage() {
 
               {!result && !isLoading && (
                 <div className="flex flex-col items-center justify-center py-20 text-center space-y-3">
-                  <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-neutral-700">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] flex items-center justify-center text-slate-300 dark:text-neutral-700">
                     <ScanSearch size={28} />
                   </div>
                   <div>
-                    <p className="text-sm font-mono text-neutral-500">ENGINE_IDLE</p>
-                    <p className="text-[10px] text-neutral-700 mt-1 uppercase">Load content to begin forensic analysis</p>
+                    <p className="text-sm font-mono text-slate-400 dark:text-neutral-500">ENGINE_IDLE</p>
+                    <p className="text-[10px] text-slate-400 dark:text-neutral-700 mt-1 uppercase tracking-wider">Load content to begin forensic analysis</p>
                   </div>
                 </div>
               )}

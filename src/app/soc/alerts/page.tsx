@@ -21,7 +21,7 @@ export default function AlertsPage() {
   const totalAlerts = scans.filter((s) => s.severity === 'High' || s.severity === 'Critical' || s.severity === 'Medium').length;
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-6 lg:p-8 space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -29,41 +29,41 @@ export default function AlertsPage() {
             <Bell size={12} className="text-rose-500" />
             <span className="text-[10px] font-mono text-rose-500/60 uppercase tracking-widest">Alert Center</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Security Alerts</h1>
-          <p className="text-xs text-neutral-500 mt-0.5">Critical and high-severity threat notifications</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Security Alerts</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Critical and high-severity threat notifications</p>
         </div>
       </div>
 
       {/* Alert Summary KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-red-500/20 dark:border-red-500/10 bg-red-500/[0.03] p-5 shadow-sm">
+        <div className="glass-card p-5 shadow-sm border-rose-500/20 dark:border-red-500/10 bg-rose-50/30 dark:bg-red-500/[0.03]">
           <div className="flex items-center gap-2 mb-2">
-            <ShieldAlert size={14} className="text-red-400 animate-pulse" />
-            <span className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest">Critical</span>
+            <ShieldAlert size={14} className="text-red-500 animate-pulse" />
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Critical</span>
           </div>
           <span className="text-3xl font-bold text-red-500 dark:text-red-400">{criticalCount}</span>
         </div>
-        <div className="rounded-2xl border border-rose-500/20 dark:border-rose-500/10 bg-rose-500/[0.03] p-5 shadow-sm">
+        <div className="glass-card p-5 shadow-sm border-rose-500/20 dark:border-rose-500/10 bg-rose-50/30 dark:bg-rose-500/[0.03]">
           <div className="flex items-center gap-2 mb-2">
-            <ShieldAlert size={14} className="text-rose-400" />
-            <span className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest">High Risk</span>
+            <ShieldAlert size={14} className="text-rose-500" />
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">High Risk</span>
           </div>
           <span className="text-3xl font-bold text-rose-500 dark:text-rose-400">{highCount}</span>
         </div>
-        <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-neutral-50 dark:bg-white/[0.02] p-5 shadow-sm">
+        <div className="glass-card p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <Bell size={14} className="text-neutral-500" />
-            <span className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest">Total Alerts</span>
+            <Bell size={14} className="text-slate-400" />
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Total Alerts</span>
           </div>
-          <span className="text-3xl font-bold text-neutral-900 dark:text-white">{totalAlerts}</span>
+          <span className="text-3xl font-bold text-slate-900 dark:text-white">{totalAlerts}</span>
         </div>
       </div>
 
       {/* Alert List */}
-      <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] bg-white dark:bg-[#0d1117]/80 backdrop-blur-xl overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/[0.06] flex items-center gap-2">
+      <div className="glass-card overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center gap-2 bg-slate-50/50 dark:bg-transparent">
           <ShieldAlert size={14} className="text-amber-500" />
-          <span className="text-xs font-mono text-neutral-400 uppercase tracking-widest">Active Alerts</span>
+          <span className="text-xs font-mono text-slate-400 uppercase tracking-widest">Active Alerts</span>
         </div>
         <div className="p-6">
           <AlertList scans={scans} />

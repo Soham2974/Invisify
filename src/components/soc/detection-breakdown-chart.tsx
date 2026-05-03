@@ -6,7 +6,7 @@ import type { ScanResult } from '@/lib/types';
 import { getDetectionTypeDistribution } from '@/lib/soc-analytics';
 
 const COLORS = [
-  '#10b981', // emerald — zero-width
+  '#00FFB2', // neon green — zero-width
   '#f59e0b', // amber — homoglyph
   '#8b5cf6', // purple — emoji
   '#3b82f6', // blue — image
@@ -20,13 +20,13 @@ interface DetectionBreakdownChartProps {
   scans: ScanResult[];
 }
 
-// Custom tooltip for dark theme
+// Custom tooltip with glassmorphism
 const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white/95 dark:bg-[#0d1117]/95 border border-neutral-200 dark:border-white/10 rounded-xl px-4 py-3 shadow-2xl backdrop-blur-md">
-      <p className="text-xs text-neutral-500 dark:text-neutral-400 font-mono uppercase mb-1">{payload[0].name}</p>
-      <p className="text-lg font-bold text-neutral-900 dark:text-white">{payload[0].value} <span className="text-xs text-neutral-500">detections</span></p>
+    <div className="bg-[#0B0F14]/95 border border-white/[0.08] rounded-xl px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+      <p className="text-[10px] text-neutral-500 font-mono uppercase mb-1 tracking-wider">{payload[0].name}</p>
+      <p className="text-lg font-bold text-white">{payload[0].value} <span className="text-xs text-neutral-500 font-normal">detections</span></p>
     </div>
   );
 };
@@ -35,7 +35,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 const CustomLegend = ({ payload }: any) => {
   if (!payload) return null;
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4 justify-center">
+    <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 justify-center">
       {payload.map((entry: any, i: number) => (
         <div key={i} className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -74,7 +74,7 @@ export default function DetectionBreakdownChart({ scans }: DetectionBreakdownCha
             dataKey="value"
             stroke="none"
             animationBegin={200}
-            animationDuration={800}
+            animationDuration={1000}
           >
             {data.map((_, i) => (
               <Cell key={i} fill={COLORS[i % COLORS.length]} opacity={0.85} />

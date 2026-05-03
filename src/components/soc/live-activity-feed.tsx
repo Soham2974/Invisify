@@ -37,6 +37,14 @@ const SEVERITY_DOT: Record<Severity, string> = {
   Critical: 'bg-red-500 animate-pulse',
 };
 
+const SEVERITY_GLOW: Record<Severity, string> = {
+  Safe: '',
+  Low: '',
+  Medium: 'shadow-[0_0_6px_rgba(245,158,11,0.3)]',
+  High: 'shadow-[0_0_6px_rgba(244,63,94,0.3)]',
+  Critical: 'shadow-[0_0_8px_rgba(239,68,68,0.4)]',
+};
+
 interface LiveActivityFeedProps {
   events: ActivityEvent[];
   maxVisible?: number;
@@ -75,16 +83,16 @@ export default function LiveActivityFeed({ events, maxVisible = 8 }: LiveActivit
             key={event.id}
             className={cn(
               'flex items-start gap-3 p-3 rounded-xl transition-all duration-300',
-              'hover:bg-neutral-100 dark:hover:bg-white/[0.03] group',
+              'hover:bg-white/[0.03] group',
               'animate-in fade-in slide-in-from-top-2',
             )}
             style={{ animationDelay: `${idx * 50}ms` }}
           >
             {/* Severity dot + timeline line */}
             <div className="flex flex-col items-center gap-1 shrink-0 pt-1">
-              <div className={cn('w-2 h-2 rounded-full', SEVERITY_DOT[event.severity])} />
+              <div className={cn('w-2 h-2 rounded-full', SEVERITY_DOT[event.severity], SEVERITY_GLOW[event.severity])} />
               {idx < visibleEvents.length - 1 && (
-                <div className="w-px flex-1 bg-neutral-200 dark:bg-white/[0.04] min-h-[16px]" />
+                <div className="w-px flex-1 bg-white/[0.04] min-h-[16px]" />
               )}
             </div>
 
@@ -99,11 +107,11 @@ export default function LiveActivityFeed({ events, maxVisible = 8 }: LiveActivit
                   {formatTimestamp(event.timestamp)}
                 </span>
               </div>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed truncate group-hover:text-neutral-900 dark:group-hover:text-neutral-300 transition-colors">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed truncate group-hover:text-neutral-300 transition-colors">
                 {event.message}
               </p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[9px] font-mono text-neutral-600 uppercase">{event.source}</span>
+                <span className="text-[9px] font-mono text-neutral-700 uppercase">{event.source}</span>
               </div>
             </div>
           </div>

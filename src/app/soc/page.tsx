@@ -11,6 +11,7 @@ import SeverityBadge from '@/components/soc/severity-badge';
 import { Activity, Shield, Zap, Clock, Radio, ArrowRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
 
 const DetectionBreakdownChart = dynamic(
   () => import('@/components/soc/detection-breakdown-chart'),
@@ -46,39 +47,41 @@ export default function SOCDashboardPage() {
   const latestScan = scans[0];
 
   return (
-    <div className={`p-6 lg:p-8 space-y-8 transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`p-6 lg:p-8 xl:p-10 space-y-8 animate-fade-in transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
       {/* ═══════════════════ HEADER ═══════════════════ */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <div className="space-y-1">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pl-12 lg:pl-0">
+        <div className="space-y-1.5">
           <div className="flex items-center gap-2.5">
             <div className="relative">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-neon animate-pulse" />
+              <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-neon animate-ping" />
             </div>
-            <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400/70 uppercase tracking-[0.2em]">Cascade Engine Active</span>
+            <span className="text-[11px] font-mono text-emerald-600 dark:text-neon/50 uppercase tracking-[0.2em] font-bold">Cascade Engine Active</span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center overflow-hidden shadow-lg">
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/[0.05] flex items-center justify-center overflow-hidden shadow-sm dark:shadow-lg border border-slate-200 dark:border-white/10">
               <Image src="/logo.png" alt="Logo" width={40} height={40} className="object-cover" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-500 dark:from-white dark:via-white dark:to-neutral-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:bg-gradient-to-r dark:from-white dark:via-white dark:to-neutral-400 dark:bg-clip-text dark:text-transparent">
               Threat Operations Center
             </h1>
           </div>
-          <p className="text-sm text-neutral-500 font-medium">Real-time steganography detection & hidden threat analysis</p>
+          <p className="text-sm text-slate-500 dark:text-neutral-500 font-medium">Real-time steganography detection & hidden threat analysis</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-100 dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.06] backdrop-blur-sm">
-            <Clock size={13} className="text-neutral-500" />
-            <span className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400">{clockStr || '\u00A0'}</span>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] backdrop-blur-sm shadow-sm">
+            <Clock size={13} className="text-slate-500 dark:text-neutral-500" />
+            <span className="text-[11px] font-mono text-slate-500 dark:text-neutral-500 font-bold">{clockStr || '\u00A0'}</span>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500/[0.08] to-cyan-500/[0.05] border border-emerald-500/15">
-            <Zap size={13} className="text-emerald-400" />
-            <span className="text-[11px] font-mono font-bold text-emerald-400/80 tracking-wider">3-TIER CASCADE</span>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-neon/[0.04] border border-emerald-200 dark:border-neon/10 shadow-sm">
+            <Zap size={13} className="text-emerald-600 dark:text-neon/60" />
+            <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-neon/50 tracking-wider">3-TIER CASCADE</span>
           </div>
-          <Link href="/soc/scanner" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]">
-            <Sparkles size={13} /> Launch Scanner
-          </Link>
+          <Button asChild size="sm" className="btn-glow-green rounded-xl text-xs h-10 px-4 font-bold active:scale-95 transition-all shadow-lg">
+            <Link href="/soc/scanner">
+              <Sparkles size={14} className="mr-2" /> Launch Scanner
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -88,16 +91,15 @@ export default function SOCDashboardPage() {
       {/* ═══════════════════ LATEST SCAN + PIE CHART ═══════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Latest Scan Result — Hero Card */}
-        <div className="lg:col-span-7 relative rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden group">
-          {/* Card gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-emerald-50/30 dark:from-[#0d1117] dark:via-[#0d1117] dark:to-emerald-950/10" />
+        <div className="lg:col-span-7 relative overflow-hidden group glass-card glossy-dark shadow-sm">
+          <div className="absolute inset-0 dark:bg-gradient-to-br dark:from-[#03060c] dark:via-[#03060c] dark:to-emerald-950/5 transition-colors duration-300" />
           <div className="relative">
-            <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/[0.06] flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between bg-slate-50/50 dark:bg-transparent">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                  <Shield size={14} className="text-emerald-400" />
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 dark:bg-neon/[0.08] border border-emerald-500/20 dark:border-neon/15 flex items-center justify-center">
+                  <Shield size={14} className="text-emerald-600 dark:text-neon" />
                 </div>
-                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Latest Scan Result</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">Latest Scan Result</span>
               </div>
               {latestScan && <SeverityBadge severity={latestScan.severity} size="sm" />}
             </div>
@@ -105,50 +107,50 @@ export default function SOCDashboardPage() {
               {latestScan ? (
                 <div className="flex flex-col md:flex-row items-center gap-8">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-emerald-500/[0.06] rounded-full blur-2xl scale-150" />
+                    <div className="absolute inset-0 bg-emerald-500/10 dark:bg-neon/[0.04] rounded-full blur-3xl scale-150" />
                     <RiskGauge score={latestScan.score} severity={latestScan.severity} size={150} />
                   </div>
                   <div className="flex-1 space-y-5">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1.5">Content Type</p>
+                        <p className="text-[10px] font-mono text-slate-400 dark:text-neutral-600 uppercase tracking-widest mb-1.5 font-bold">Content Type</p>
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-cyan-500/10 flex items-center justify-center">
-                            <Radio size={11} className="text-cyan-400" />
+                          <div className="w-6 h-6 rounded-md bg-cyan-500/10 dark:bg-cyan-500/[0.08] flex items-center justify-center">
+                            <Radio size={11} className="text-cyan-600 dark:text-cyan-400" />
                           </div>
-                          <span className="text-sm font-semibold text-neutral-900 dark:text-white">{latestScan.content_type} Analysis</span>
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">{latestScan.content_type} Analysis</span>
                         </div>
                       </div>
                       <div>
-                        <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1.5">Confidence</p>
-                        <span className="text-sm font-semibold text-neutral-900 dark:text-white">
+                        <p className="text-[10px] font-mono text-slate-400 dark:text-neutral-600 uppercase tracking-widest mb-1.5 font-bold">Confidence</p>
+                        <span className="text-sm font-bold text-slate-900 dark:text-white">
                           {(() => { try { const f = JSON.parse(latestScan.findings); return `${((f.ensemble_confidence || 0) * 100).toFixed(0)}%`; } catch { return 'N/A'; } })()}
                         </span>
                       </div>
                     </div>
                     <div>
-                      <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1.5">AI Summary</p>
-                      <p className="text-[13px] text-neutral-600 dark:text-neutral-300/90 leading-relaxed">{latestScan.summary}</p>
+                      <p className="text-[10px] font-mono text-slate-400 dark:text-neutral-600 uppercase tracking-widest mb-1.5 font-bold">AI Summary</p>
+                      <p className="text-[13px] text-slate-600 dark:text-neutral-400 leading-relaxed font-medium">{latestScan.summary}</p>
                     </div>
                     {latestScan.reasons.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {latestScan.reasons.slice(0, 3).map((r, i) => (
-                          <span key={i} className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-amber-500/[0.06] border border-amber-500/15 text-amber-400/70">
+                          <span key={i} className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-white dark:bg-amber-500/[0.06] border border-slate-200 dark:border-amber-500/10 text-amber-600 dark:text-amber-400/70 shadow-sm">
                             {r.length > 45 ? r.slice(0, 45) + '…' : r}
                           </span>
                         ))}
                         {latestScan.reasons.length > 3 && (
-                          <span className="text-[10px] font-mono text-neutral-600 self-center">+{latestScan.reasons.length - 3}</span>
+                          <span className="text-[10px] font-mono text-slate-400 dark:text-neutral-600 self-center font-bold">+{latestScan.reasons.length - 3}</span>
                         )}
                       </div>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-16 text-neutral-600">
-                  <Shield size={36} className="mx-auto mb-4 text-neutral-700" />
-                  <p className="text-sm font-semibold">AWAITING SCAN</p>
-                  <p className="text-xs mt-1 text-neutral-700">Run a scan to see results here</p>
+                <div className="text-center py-16 text-slate-400 dark:text-neutral-600">
+                  <Shield size={36} className="mx-auto mb-4 text-slate-300 dark:text-neutral-700" />
+                  <p className="text-sm font-bold text-slate-700 dark:text-white">AWAITING SCAN</p>
+                  <p className="text-xs mt-1 text-slate-400 dark:text-neutral-700 uppercase tracking-widest">Run a scan to begin analysis</p>
                 </div>
               )}
             </div>
@@ -156,14 +158,14 @@ export default function SOCDashboardPage() {
         </div>
 
         {/* Detection Breakdown — Donut Chart */}
-        <div className="lg:col-span-5 rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-purple-50/30 dark:from-[#0d1117] dark:via-[#0d1117] dark:to-purple-950/10" />
+        <div className="lg:col-span-5 overflow-hidden relative glass-card glossy-dark shadow-sm">
+          <div className="absolute inset-0 dark:bg-gradient-to-br dark:from-[#03060c] dark:via-[#03060c] dark:to-purple-950/5 transition-colors duration-300" />
           <div className="relative">
-            <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/[0.06] flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                <Activity size={14} className="text-purple-400" />
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center gap-2.5 bg-slate-50/50 dark:bg-transparent">
+              <div className="w-7 h-7 rounded-lg bg-purple-500/10 dark:bg-purple-500/[0.08] border border-purple-500/20 dark:border-purple-500/15 flex items-center justify-center">
+                <Activity size={14} className="text-purple-600 dark:text-purple-400" />
               </div>
-              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Detection Breakdown</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">Detection Breakdown</span>
             </div>
             <div className="p-4 h-[300px]">
               <DetectionBreakdownChart scans={scans} />
@@ -174,14 +176,14 @@ export default function SOCDashboardPage() {
 
       {/* ═══════════════════ TIMELINE + ACTIVITY FEED ═══════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7 rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-cyan-50/30 dark:from-[#0d1117] dark:via-[#0d1117] dark:to-cyan-950/10" />
+        <div className="lg:col-span-7 overflow-hidden relative glass-card glossy-dark shadow-sm">
+          <div className="absolute inset-0 dark:bg-gradient-to-br dark:from-[#03060c] dark:via-[#03060c] dark:to-cyan-950/5 transition-colors duration-300" />
           <div className="relative">
-            <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/[0.06] flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-                <Activity size={14} className="text-cyan-400" />
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center gap-2.5 bg-slate-50/50 dark:bg-transparent">
+              <div className="w-7 h-7 rounded-lg bg-cyan-500/10 dark:bg-cyan-500/[0.08] border border-cyan-500/20 dark:border-cyan-500/15 flex items-center justify-center">
+                <Activity size={14} className="text-cyan-600 dark:text-cyan-400" />
               </div>
-              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Threat Score Timeline</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">Threat Score Timeline</span>
             </div>
             <div className="p-4 h-[300px]">
               <ScanTimelineChart scans={scans} />
@@ -189,19 +191,19 @@ export default function SOCDashboardPage() {
           </div>
         </div>
 
-        <div className="lg:col-span-5 rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-amber-50/30 dark:from-[#0d1117] dark:via-[#0d1117] dark:to-amber-950/10" />
+        <div className="lg:col-span-5 overflow-hidden relative glass-card glossy-dark shadow-sm">
+          <div className="absolute inset-0 dark:bg-gradient-to-br dark:from-[#03060c] dark:via-[#03060c] dark:to-amber-950/5 transition-colors duration-300" />
           <div className="relative">
-            <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/[0.06] flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between bg-slate-50/50 dark:bg-transparent">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                  <Zap size={14} className="text-amber-400" />
+                <div className="w-7 h-7 rounded-lg bg-amber-500/10 dark:bg-amber-500/[0.08] border border-amber-500/20 dark:border-amber-500/15 flex items-center justify-center">
+                  <Zap size={14} className="text-amber-600 dark:text-amber-400" />
                 </div>
-                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Live Activity</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">Live Activity</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] font-mono text-neutral-600">LIVE</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-neon animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.4)] dark:shadow-[0_0_6px_rgba(0,255,178,0.4)]" />
+                <span className="text-[9px] font-mono text-slate-400 dark:text-neutral-600 font-bold tracking-widest">LIVE</span>
               </div>
             </div>
             <div className="p-3 h-[300px] overflow-hidden">
@@ -212,19 +214,19 @@ export default function SOCDashboardPage() {
       </div>
 
       {/* ═══════════════════ SCAN HISTORY TABLE ═══════════════════ */}
-      <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.06] overflow-hidden relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-white dark:from-[#0d1117] dark:via-[#0d1117] dark:to-[#0d1117]" />
+      <div className="overflow-hidden relative glass-card shadow-sm">
+        <div className="absolute inset-0 bg-white/50 dark:bg-[#0B0F14] transition-colors duration-300" />
         <div className="relative">
-          <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/[0.06] flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between bg-slate-50/50 dark:bg-transparent">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
-                <Clock size={14} className="text-neutral-400" />
+              <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center">
+                <Clock size={14} className="text-slate-500 dark:text-neutral-400" />
               </div>
-              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Scan History</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">Scan History</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-mono text-neutral-600">{scans.length} records</span>
-              <Link href="/soc/history" className="flex items-center gap-1 text-[10px] font-mono text-emerald-400/60 hover:text-emerald-400 transition-colors">
+              <span className="text-[10px] font-mono text-slate-400 dark:text-neutral-600 font-bold uppercase">{scans.length} records</span>
+              <Link href="/soc/history" className="flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-600 dark:text-neon/40 hover:text-emerald-700 dark:hover:text-neon transition-colors uppercase tracking-widest">
                 View All <ArrowRight size={10} />
               </Link>
             </div>
@@ -234,19 +236,20 @@ export default function SOCDashboardPage() {
       </div>
 
       {/* ═══════════════════ FOOTER ═══════════════════ */}
-      <div className="flex items-center justify-between text-[9px] font-mono text-neutral-400 dark:text-neutral-700/60 py-3 border-t border-neutral-200 dark:border-white/[0.03]">
+      <div className="flex items-center justify-between text-[9px] font-mono text-slate-400 dark:text-neutral-700/60 py-4 border-t border-slate-100 dark:border-white/[0.03]">
         <div className="flex items-center gap-5">
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />ENGINE ONLINE
+          <span className="flex items-center gap-1.5 font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-neon animate-pulse" />ENGINE ONLINE
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />ZUSTAND STORE
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />GEMINI AI
-          </span>
         </div>
-        <span className="tracking-wider">SENTINEL PRIME // INVISIFY // v4.2.0</span>
+        <div className="flex items-center gap-3 font-bold">
+          <span>SEC_PROTO_ACTIVE</span>
+          <span className="text-emerald-500 dark:text-neon">//</span>
+          <span>MEM: OK</span>
+        </div>
       </div>
     </div>
   );

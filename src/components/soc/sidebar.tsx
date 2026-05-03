@@ -15,6 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Activity,
+  Menu,
+  X,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -27,6 +29,7 @@ const NAV_ITEMS = [
   { href: '/soc/intelligence', label: 'Threat Intel', icon: Brain, section: 'main' },
   { href: '/soc/alerts', label: 'Alerts', icon: Bell, section: 'main', badge: true },
   { href: '/soc/history', label: 'Logs / History', icon: History, section: 'main' },
+  { href: '/soc/about', label: 'About Us', icon: Shield, section: 'main' },
   { href: '/soc/extension', label: 'Extension Monitor', icon: Chrome, section: 'monitor' },
   { href: '/soc/settings', label: 'Settings', icon: Settings, section: 'system' },
 ];
@@ -36,6 +39,7 @@ export default function Sidebar() {
   const logs = useLogStore((s) => s.logs);
   const alertCount = logs.filter((l) => l.severity === 'High' || l.severity === 'Critical').length;
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === '/soc') return pathname === '/soc';
@@ -49,29 +53,34 @@ export default function Sidebar() {
       <Link
         key={item.href}
         href={item.href}
+        onClick={() => setMobileOpen(false)}
         className={cn(
-          'flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 group relative',
+          'flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-bold transition-all duration-300 group relative',
           active
             ? `${activeBg} ${activeColor}`
-            : 'text-neutral-500 hover:text-neutral-200 hover:bg-white/[0.03]',
+            : 'text-slate-500 hover:text-slate-900 dark:hover:text-neutral-200 hover:bg-slate-100 dark:hover:bg-white/[0.03]',
           collapsed && 'justify-center px-0'
         )}
       >
         {active && (
-          <div className={cn('absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full', activeColor.replace('text-', 'bg-'))} />
+          <div className={cn(
+            'absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full',
+            activeColor.replace('text-', 'bg-'),
+            'shadow-[0_0_8px_rgba(0,255,178,0.3)]'
+          )} />
         )}
-        <Icon size={17} className={cn('shrink-0', active ? activeColor : 'text-neutral-600 group-hover:text-neutral-400')} />
+        <Icon size={17} className={cn('shrink-0 transition-all duration-300', active ? activeColor : 'text-slate-400 dark:text-neutral-600 group-hover:text-slate-600 dark:group-hover:text-neutral-400')} />
         {!collapsed && <span>{item.label}</span>}
         {item.badge && alertCount > 0 && (
           <span className={cn(
-            'ml-auto bg-rose-500 text-white text-[9px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-[0_0_8px_rgba(244,63,94,0.3)]',
+            'ml-auto bg-rose-500 text-white text-[9px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-lg shadow-rose-500/20',
             collapsed && 'absolute -top-0.5 -right-0.5 ml-0 min-w-[14px] h-[14px] text-[8px]'
           )}>
             {alertCount > 99 ? '99+' : alertCount}
           </span>
         )}
         {collapsed && (
-          <div className="absolute left-full ml-3 px-3 py-1.5 bg-white dark:bg-neutral-900/95 border border-neutral-200 dark:border-white/10 rounded-lg text-xs text-neutral-900 dark:text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-50 shadow-xl backdrop-blur-sm">
+          <div className="absolute left-full ml-3 px-3 py-1.5 bg-white dark:bg-[#0B0F14]/95 border border-slate-200 dark:border-white/[0.08] rounded-lg text-xs text-slate-900 dark:text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-50 shadow-xl backdrop-blur-xl">
             {item.label}
           </div>
         )}
@@ -79,111 +88,179 @@ export default function Sidebar() {
     );
   };
 
-  return (
-    <aside
-      className={cn(
-        'h-screen sticky top-0 flex flex-col border-r border-neutral-200 dark:border-white/[0.06] transition-all duration-300 z-50 shrink-0 relative',
-        collapsed ? 'w-[72px]' : 'w-[260px]'
+  // Shared nav content for both desktop and mobile
+  const navContent = (
+    <>
+      {!collapsed && (
+        <p className="px-3 mb-2.5 text-[10px] font-black text-slate-400 dark:text-neutral-600/80 uppercase tracking-[0.2em]">Operations</p>
       )}
-    >
-      {/* Sidebar background with subtle gradient */}
-      <div className="absolute inset-0 bg-white dark:bg-[#050810] transition-colors duration-300" />
-      <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.02] dark:from-emerald-500/[0.01] via-transparent to-purple-500/[0.02] dark:to-purple-500/[0.01]" />
+      {NAV_ITEMS.filter((i) => i.section === 'main').map((item) =>
+        renderNavItem(item, 'text-emerald-600 dark:text-neon', 'bg-emerald-500/10 dark:bg-neon/[0.06]')
+      )}
 
-      <div className="relative flex flex-col h-full">
-        {/* Logo */}
-        <div className={cn('flex items-center gap-3 px-5 h-[72px] border-b border-neutral-200 dark:border-white/[0.06] shrink-0', collapsed && 'justify-center px-2')}>
-          <Link href="/soc" className="flex items-center gap-3 group/logo">
-            <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center overflow-hidden shadow-lg group-hover/logo:scale-105 transition-transform duration-300">
-                <Image 
-                  src="/logo.png" 
-                  alt="Invisify Logo" 
-                  width={36} 
-                  height={36} 
-                  className="object-cover"
-                  priority
-                />
+      <div className="my-4 mx-3 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-white/[0.04] to-transparent" />
+
+      {!collapsed && (
+        <p className="px-3 mb-2.5 text-[10px] font-black text-slate-400 dark:text-neutral-600/80 uppercase tracking-[0.2em]">Monitor</p>
+      )}
+      {NAV_ITEMS.filter((i) => i.section === 'monitor').map((item) =>
+        renderNavItem(item, 'text-cyan-600 dark:text-cyan-400', 'bg-cyan-500/10 dark:bg-cyan-500/[0.06]')
+      )}
+
+      <div className="my-4 mx-3 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-white/[0.04] to-transparent" />
+
+      {!collapsed && (
+        <p className="px-3 mb-2.5 text-[10px] font-black text-slate-400 dark:text-neutral-600/80 uppercase tracking-[0.2em]">System</p>
+      )}
+      {NAV_ITEMS.filter((i) => i.section === 'system').map((item) =>
+        renderNavItem(item, 'text-purple-600 dark:text-purple-400', 'bg-purple-500/10 dark:bg-purple-500/[0.06]')
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {/* ═══════════ MOBILE HAMBURGER BUTTON ═══════════ */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-[60] w-10 h-10 rounded-xl bg-white/80 dark:bg-cyber-bg/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] flex items-center justify-center text-slate-900 dark:text-white shadow-lg"
+        aria-label="Open sidebar"
+      >
+        <Menu size={18} />
+      </button>
+
+      {/* ═══════════ MOBILE OVERLAY ═══════════ */}
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+      )}
+
+      {/* ═══════════ SIDEBAR ═══════════ */}
+      <aside
+        className={cn(
+          'h-screen sticky top-0 flex flex-col border-r border-slate-200 dark:border-white/[0.04] transition-all duration-300 z-[60] shrink-0 relative',
+          // Desktop
+          'hidden lg:flex',
+          collapsed ? 'w-[72px]' : 'w-[260px]'
+        )}
+      >
+        {/* Sidebar background */}
+        <div className="absolute inset-0 bg-white dark:bg-cyber-bg transition-colors duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.01] dark:from-neon/[0.01] via-transparent to-purple-500/[0.01] dark:to-purple-500/[0.01]" />
+        {/* Subtle right-edge glow */}
+        <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-slate-200 dark:from-neon/[0.08] via-transparent to-slate-200 dark:to-purple-500/[0.08]" />
+
+        <div className="relative flex flex-col h-full">
+          {/* Logo */}
+          <div className={cn('flex items-center gap-3 px-5 h-[72px] border-b border-slate-100 dark:border-white/[0.04] shrink-0', collapsed && 'justify-center px-2')}>
+            <Link href="/soc" className="flex items-center gap-3 group/logo">
+              <div className="relative shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-white dark:bg-white/[0.05] flex items-center justify-center overflow-hidden shadow-sm dark:shadow-lg group-hover/logo:scale-105 transition-transform duration-300 border border-slate-200 dark:border-white/10">
+                  <Image 
+                    src="/logo.png" 
+                    alt="Invisify Logo" 
+                    width={36} 
+                    height={36} 
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+                <div className="absolute -inset-1 bg-emerald-500/20 dark:bg-neon/20 rounded-xl blur opacity-0 group-hover/logo:opacity-100 transition-opacity duration-500" />
               </div>
-              <div className="absolute -inset-1 bg-emerald-500/20 rounded-xl blur opacity-0 group-hover/logo:opacity-100 transition-opacity" />
+              {!collapsed && (
+                <div className="overflow-hidden">
+                  <h1 className="text-[14px] font-black text-slate-900 dark:text-white tracking-tight leading-none">SENTINEL PRIME</h1>
+                  <p className="text-[9px] text-emerald-600/80 dark:text-neon/50 font-mono font-bold tracking-[0.2em] mt-1">INVISIFY SYSTEM</p>
+                </div>
+              )}
+            </Link>
+          </div>
+
+          {/* System status bar */}
+          {!collapsed && (
+            <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.04]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-neon" />
+                    <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-neon animate-ping" />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-neon/40 uppercase tracking-[0.2em]">System Online</span>
+                </div>
+                <div className="w-8 h-1 rounded-full bg-emerald-500/10 dark:bg-neon/10 overflow-hidden">
+                  <div className="w-full h-full bg-emerald-500/30 dark:bg-neon/30 animate-pulse rounded-full" />
+                </div>
+              </div>
             </div>
+          )}
+
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+            {navContent}
+          </nav>
+
+          {/* Bottom panel */}
+          <div className="border-t border-slate-100 dark:border-white/[0.04] p-3 shrink-0 space-y-2">
+            {/* Theme Toggle */}
+            <div className={cn('flex items-center', collapsed ? 'justify-center' : 'justify-between px-2')}>
+              {!collapsed && <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-neutral-600 uppercase tracking-[0.15em]">Theme</span>}
+              <ThemeToggle />
+            </div>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="w-full flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-slate-400 hover:text-slate-900 dark:hover:text-neutral-300 hover:bg-slate-100 dark:hover:bg-white/[0.03] transition-all"
+            >
+              {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+              {!collapsed && <span className="text-[11px] font-mono font-bold">Collapse</span>}
+            </button>
             {!collapsed && (
-              <div className="overflow-hidden">
-                <h1 className="text-[14px] font-black text-neutral-900 dark:text-white tracking-tight leading-none">SENTINEL PRIME</h1>
-                <p className="text-[9px] text-emerald-600 dark:text-emerald-400/60 font-mono tracking-[0.2em] mt-1">INVISIFY SYSTEM</p>
+              <div className="px-3 flex items-center gap-2">
+                <Activity size={9} className="text-slate-300 dark:text-neutral-700" />
+                <span className="text-[8px] font-mono font-bold text-slate-300 dark:text-neutral-700 uppercase tracking-[0.15em]">v4.2.0 // Cascade Engine</span>
               </div>
             )}
-          </Link>
-        </div>
-
-        {/* System status bar */}
-        {!collapsed && (
-          <div className="px-5 py-3 border-b border-neutral-200 dark:border-white/[0.04]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                </div>
-                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400/40 uppercase tracking-[0.2em]">System Online</span>
-              </div>
-              <div className="w-8 h-1 rounded-full bg-emerald-500/20 overflow-hidden">
-                <div className="w-full h-full bg-emerald-500/40 animate-pulse rounded-full" />
-              </div>
-            </div>
           </div>
+        </div>
+      </aside>
+
+      {/* ═══════════ MOBILE SIDEBAR DRAWER ═══════════ */}
+      <aside
+        className={cn(
+          'lg:hidden fixed top-0 left-0 h-screen w-[280px] z-[60] flex flex-col transition-transform duration-300',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-          {!collapsed && (
-            <p className="px-3 mb-2.5 text-[10px] font-semibold text-neutral-600/80 uppercase tracking-[0.2em]">Operations</p>
-          )}
-          {NAV_ITEMS.filter((i) => i.section === 'main').map((item) =>
-            renderNavItem(item, 'text-emerald-600 dark:text-emerald-400', 'bg-emerald-500/10 dark:bg-emerald-500/[0.08]')
-          )}
-
-          <div className="my-4 mx-3 h-px bg-gradient-to-r from-transparent via-neutral-100 dark:via-white/[0.04] to-transparent" />
-
-          {!collapsed && (
-            <p className="px-3 mb-2.5 text-[10px] font-semibold text-neutral-600/80 uppercase tracking-[0.2em]">Monitor</p>
-          )}
-          {NAV_ITEMS.filter((i) => i.section === 'monitor').map((item) =>
-            renderNavItem(item, 'text-cyan-600 dark:text-cyan-400', 'bg-cyan-500/10 dark:bg-cyan-500/[0.08]')
-          )}
-
-          <div className="my-4 mx-3 h-px bg-gradient-to-r from-transparent via-neutral-100 dark:via-white/[0.04] to-transparent" />
-
-          {!collapsed && (
-            <p className="px-3 mb-2.5 text-[10px] font-semibold text-neutral-600/80 uppercase tracking-[0.2em]">System</p>
-          )}
-          {NAV_ITEMS.filter((i) => i.section === 'system').map((item) =>
-            renderNavItem(item, 'text-purple-600 dark:text-purple-400', 'bg-purple-500/10 dark:bg-purple-500/[0.08]')
-          )}
-        </nav>
-
-        {/* Bottom panel */}
-        <div className="border-t border-neutral-200 dark:border-white/[0.04] p-3 shrink-0 space-y-2">
-          {/* Theme Toggle */}
-          <div className={cn('flex items-center', collapsed ? 'justify-center' : 'justify-between px-2')}>
-            {!collapsed && <span className="text-[10px] font-mono text-neutral-600 uppercase tracking-[0.15em]">Theme</span>}
-            <ThemeToggle />
+      >
+        <div className="absolute inset-0 bg-white dark:bg-cyber-bg border-r border-slate-200 dark:border-white/[0.06]" />
+        <div className="relative flex flex-col h-full">
+          {/* Mobile header */}
+          <div className="flex items-center justify-between px-5 h-[72px] border-b border-slate-100 dark:border-white/[0.04] shrink-0">
+            <Link href="/soc" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
+              <div className="w-8 h-8 rounded-xl bg-white dark:bg-white/[0.05] flex items-center justify-center overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
+                <Image src="/logo.png" alt="Logo" width={32} height={32} className="object-cover" priority />
+              </div>
+              <div>
+                <h1 className="text-[13px] font-black text-slate-900 dark:text-white tracking-tight leading-none">SENTINEL PRIME</h1>
+                <p className="text-[8px] text-emerald-600/50 dark:text-neon/50 font-mono font-bold tracking-[0.2em] mt-0.5">INVISIFY</p>
+              </div>
+            </Link>
+            <button onClick={() => setMobileOpen(false)} className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.04] flex items-center justify-center text-slate-400 dark:text-neutral-400 transition-colors">
+              <X size={16} />
+            </button>
           </div>
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-neutral-500 dark:text-neutral-600 hover:text-neutral-900 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.03] transition-all"
-          >
-            {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
-            {!collapsed && <span className="text-[11px] font-mono">Collapse</span>}
-          </button>
-          {!collapsed && (
-            <div className="px-3 flex items-center gap-2">
-              <Activity size={9} className="text-neutral-700" />
-              <span className="text-[8px] font-mono text-neutral-700 uppercase tracking-[0.15em]">v4.2.0 // Cascade Engine</span>
+
+          {/* Mobile nav */}
+          <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+            {navContent}
+          </nav>
+
+          {/* Mobile bottom */}
+          <div className="border-t border-slate-100 dark:border-white/[0.04] p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-neutral-700 uppercase tracking-widest">v4.2.0</span>
+              <ThemeToggle />
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

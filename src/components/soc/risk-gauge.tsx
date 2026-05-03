@@ -13,7 +13,7 @@ interface RiskGaugeProps {
 }
 
 const SEVERITY_COLORS: Record<Severity, { stroke: string; glow: string; text: string }> = {
-  Safe:     { stroke: '#10b981', glow: 'rgba(16,185,129,0.3)',  text: 'text-emerald-400' },
+  Safe:     { stroke: '#00FFB2', glow: 'rgba(0,255,178,0.3)',   text: 'text-neon' },
   Low:      { stroke: '#14b8a6', glow: 'rgba(20,184,166,0.3)',  text: 'text-teal-400' },
   Medium:   { stroke: '#f59e0b', glow: 'rgba(245,158,11,0.3)',  text: 'text-amber-400' },
   High:     { stroke: '#f43f5e', glow: 'rgba(244,63,94,0.3)',   text: 'text-rose-400' },
@@ -64,7 +64,7 @@ export default function RiskGauge({ score, severity, size = 180, className, anim
           r={radius}
           fill="none"
           stroke="currentColor"
-          className="text-neutral-200 dark:text-white/[0.06]"
+          className="text-slate-100 dark:text-white/[0.04]"
           strokeWidth={strokeWidth}
         />
         {/* Glow layer */}
@@ -74,11 +74,11 @@ export default function RiskGauge({ score, severity, size = 180, className, anim
           r={radius}
           fill="none"
           stroke={colors.glow}
-          strokeWidth={strokeWidth + 6}
+          strokeWidth={strokeWidth + 8}
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
           strokeLinecap="round"
-          style={{ filter: 'blur(8px)', transition: 'stroke-dashoffset 0.3s ease-out' }}
+          style={{ filter: 'blur(10px)', transition: 'stroke-dashoffset 0.3s ease-out' }}
         />
         {/* Main arc */}
         <circle
@@ -97,7 +97,7 @@ export default function RiskGauge({ score, severity, size = 180, className, anim
 
       {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl font-black text-neutral-900 dark:text-white tracking-tighter">{displayScore}</span>
+        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">{displayScore}</span>
         <span className={cn('text-[10px] font-mono uppercase tracking-widest mt-1', colors.text)}>
           {severity}
         </span>

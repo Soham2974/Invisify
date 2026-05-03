@@ -27,7 +27,7 @@ const HyperspeedScene = dynamic(
 );
 
 // Pages that should NOT show the Hyperspeed effect
-const EXCLUDED_PATHS = ['/', '/soc'];
+const EXCLUDED_PATHS = ['/', '/soc', '/about'];
 
 export default function HyperspeedBackground() {
   const pathname = usePathname();
