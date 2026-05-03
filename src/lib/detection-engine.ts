@@ -426,7 +426,6 @@ export class DetectionEngine {
             if (veritas?.trailingDataDetected) {
                 detectorsTriggered++;
                 imageStrongSignals++;
-                imageHardEvidence++;
                 score += 45;
                 reasons.push(`trailing_data_detected (${veritas.trailingDataSize} bytes)`);
                 pValues.push(0.005);
@@ -439,7 +438,6 @@ export class DetectionEngine {
             if ((veritas?.metadataAnomalies?.length || 0) > 0) {
                 detectorsTriggered++;
                 imageStrongSignals++;
-                imageHardEvidence++;
                 score += 35;
                 reasons.push('metadata_anomaly_markers_found');
                 pValues.push(0.005);
@@ -475,7 +473,6 @@ export class DetectionEngine {
             if (veritas?.shadowChunks?.detected) {
                 detectorsTriggered++;
                 imageStrongSignals++;
-                imageHardEvidence++;
                 score += 30;
                 reasons.push(`shadow_chunks_detected (${veritas.shadowChunks.chunks.join(', ')})`);
                 pValues.push(0.005);
@@ -533,7 +530,9 @@ export class DetectionEngine {
         if (findings.image?.stego_analysis?.verifiedPayload) verifiedPayloads.push(findings.image.stego_analysis.verifiedPayload);
 
         let verifiedScore = finalScore;
-        if (verifiedPayloads.length > 0 && finalScore < 90) {
+        // Only force 100% if the payload is long or we have high existing confidence
+        const isLongPayload = verifiedPayloads.some(p => p.length > 25);
+        if (verifiedPayloads.length > 0 && (finalScore > 50 || isLongPayload)) {
             verifiedScore = 100;
             if (!reasons.includes('VERIFIED_HIDDEN_PAYLOAD_EXTRACTED')) {
                 reasons.push('VERIFIED_HIDDEN_PAYLOAD_EXTRACTED');

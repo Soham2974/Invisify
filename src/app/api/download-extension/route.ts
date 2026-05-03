@@ -14,6 +14,7 @@ export async function GET() {
             { path: 'extension/content.css', name: 'content.css' },
             { path: 'extension/popup.html', name: 'popup.html' },
             { path: 'extension/popup.js', name: 'popup.js' },
+            { path: 'extension/background.js', name: 'background.js' },
         ];
 
         // Add files to the archive

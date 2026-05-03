@@ -19,6 +19,7 @@ function getCorsOrigin(reqOrigin: string | null): string {
   if (ALLOWED_ORIGINS.includes('*')) return '*';
   if (ALLOWED_ORIGINS.includes(reqOrigin)) return reqOrigin;
   if (reqOrigin.startsWith('chrome-extension://')) return reqOrigin;
+  if (reqOrigin.includes('mail.google.com')) return reqOrigin;
   return ALLOWED_ORIGINS[0];
 }
 

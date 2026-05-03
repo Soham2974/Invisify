@@ -77,22 +77,43 @@ export function detectShadowChunks(buffer: ArrayBufferLike): { detected: boolean
     const standardChunks = new Set([
         'IHDR', 'PLTE', 'IDAT', 'IEND', 'tRNS', 'cHRM', 'gAMA', 'iCCP', 'sBIT',
         'sRGB', 'pHYs', 'sPLT', 'tIME', 'iTXt', 'tEXt', 'zTXt', 'bKGD', 'hIST',
-        // APNG standard chunks
-        'acTL', 'fcTL', 'fdAT'
+        'acTL', 'fcTL', 'fdAT', 'dSIG', 'eXIf', 'oFFs', 'sCAL', 'pCAL', 'sTER',
+        'pHYg', 'vpAg', 'adAT', 'mkBF', 'mkBS', 'mkTS', 'prVW'
     ]);
     const found: string[] = [];
     let pos = 8;
     while (pos < bytes.length - 8) {
-        // Use unsigned shift to prevent negative chunk lengths
         const length = ((bytes[pos] << 24) >>> 0) + (bytes[pos + 1] << 16) + (bytes[pos + 2] << 8) + bytes[pos + 3];
-        // Bounds check: prevent infinite loop on malformed chunks
         if (length < 0 || length > bytes.length - pos) break;
         const type = String.fromCharCode(bytes[pos + 4], bytes[pos + 5], bytes[pos + 6], bytes[pos + 7]);
         if (!/^[a-zA-Z]{4}$/.test(type)) break;
-        if (!standardChunks.has(type)) found.push(type);
+        
+        // If it's a non-standard chunk, check if it looks like a payload (high entropy or substantial size)
+        if (!standardChunks.has(type)) {
+            const chunkData = bytes.slice(pos + 8, pos + 8 + length);
+            const entropy = calculateChunkEntropy(chunkData);
+            // Only flag if it's large (> 1KB) or has very high entropy (encrypted/encoded data)
+            if (length > 1024 || (length > 64 && entropy > 0.95)) {
+                found.push(type);
+            }
+        }
         pos += 12 + length;
     }
     return { detected: found.length > 0, chunks: found };
+}
+
+function calculateChunkEntropy(data: Uint8Array): number {
+    if (data.length === 0) return 0;
+    const freq = new Array(256).fill(0);
+    for (const b of data) freq[b]++;
+    let entropy = 0;
+    for (const f of freq) {
+        if (f > 0) {
+            const p = f / data.length;
+            entropy -= p * Math.log2(p);
+        }
+    }
+    return entropy / 8;
 }
 
 export function calculateEntropyMap(buffer: ArrayBufferLike): number[] {

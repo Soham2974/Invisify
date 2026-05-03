@@ -445,34 +445,73 @@ export function analyzeMarkovChain(text: string): { score: number; suspicious: b
 }
 
 /**
- * Sentinel Prime: Homoglyph Link Detection
- * Detects if URLs in the text contain homoglyph-based phishing attempts.
+ * Sentinel Prime: Homoglyph & Typosquatting Link Detection
+ * Detects if URLs in the text contain homoglyph-based or ASCII-lookalike phishing attempts.
  */
-export function detect_homoglyph_links(text: string): { detected: boolean; suspiciousLinks: Array<{ original: string; decoded: string; domain: string }> } {
-    const urlRegex = /https?:\/\/[^\s/$.?#][^\s]*/gi;
+export function detect_homoglyph_links(text: string): { detected: boolean; suspiciousLinks: Array<{ original: string; decoded: string; domain: string; reason: string }> } {
+    // Regex that catches both http://domain.com and just domain.com (typosquatting)
+    const urlRegex = /(?:https?:\/\/)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-0][a-z0-9-]{0,61}[a-z0-9]/gi;
     const links = text.match(urlRegex) || [];
-    const suspiciousLinks: Array<{ original: string; decoded: string; domain: string }> = [];
+    const suspiciousLinks: Array<{ original: string; decoded: string; domain: string; reason: string }> = [];
+
+    // Common brand patterns for typosquatting detection
+    const BRAND_PATTERNS = [
+        { name: 'paypal', regex: /p[a4]yp[a4][lI1]|p[a4]yp[a4][lI1][vV][eE]rify/i },
+        { name: 'microsoft', regex: /micr[o0]s[o0]ft|micr[o0]s[o0]ft[a4]cc[o0]unt|micr[o0]s[o0]ft-supp[o0]rt/i },
+        { name: 'google', regex: /g[o0][o0]gle|g[o0][o0]g[lI1]e-l[o0]gin/i },
+        { name: 'facebook', regex: /f[a4]ceb[o0][o0]k|f[a4]ceb[o0][o0]k-secur[iI1]ty/i },
+        { name: 'apple', regex: /[a4]pp[lI1]e/i },
+        { name: 'amazon', regex: /[a4]m[a4]z[o0]n/i },
+        { name: 'netflix', regex: /netf[lI1]ix/i },
+        { name: 'coinbase', regex: /c[o0]inb[a4]se/i },
+        { name: 'binance', regex: /bin[a4]nce/i }
+    ];
 
     for (const link of links) {
-        // Extract domain manually to handle homoglyphs that make URL constructor throw
-        const match = link.match(/https?:\/\/([^/:\s]+)/i);
-        if (!match) continue;
-
-        const domain = match[1];
+        // Extract domain
+        let domain = link.toLowerCase();
+        if (domain.includes('://')) {
+            domain = domain.split('://')[1].split('/')[0];
+        } else {
+            domain = domain.split('/')[0];
+        }
         let decodedDomain = '';
-        let isSuspicious = false;
+        let hasUnicodeHomoglyph = false;
 
+        let isSuspicious = false;
+        let reason = '';
+
+        // 1. Check for Unicode Homoglyphs
         for (const char of domain) {
             if (HOMOGLYPHS[char]) {
-                isSuspicious = true;
+                hasUnicodeHomoglyph = true;
                 decodedDomain += HOMOGLYPHS[char];
             } else {
                 decodedDomain += char;
             }
         }
 
+        if (hasUnicodeHomoglyph && decodedDomain !== domain) {
+            isSuspicious = true;
+            reason = 'Unicode homoglyph detected';
+        }
+
+        // 2. Check for Brand Typosquatting (ASCII variants)
+        if (!isSuspicious) {
+            for (const brand of BRAND_PATTERNS) {
+                if (brand.regex.test(domain)) {
+                    // If it matches the brand pattern but is NOT the legitimate domain
+                    if (domain !== brand.name + '.com' && domain !== brand.name + '.net' && domain !== brand.name + '.org') {
+                        isSuspicious = true;
+                        reason = `Typosquatting variant of ${brand.name} detected`;
+                        break;
+                    }
+                }
+            }
+        }
+
         if (isSuspicious) {
-            suspiciousLinks.push({ original: link, decoded: decodedDomain, domain });
+            suspiciousLinks.push({ original: link, decoded: decodedDomain, domain, reason });
         }
     }
 

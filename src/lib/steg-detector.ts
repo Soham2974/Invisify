@@ -242,8 +242,13 @@ export function extractLSBPayload(pixelData: number[] | Uint8Array): string | un
         }
     }
 
-    if (content.length > 10) {
-        return `EXTRACTED_TEXT_PAYLOAD: "${content.substring(0, 40)}${content.length > 40 ? '...' : ''}"`;
+    // Require at least 20 consecutive printable characters to avoid accidental noise triggers
+    if (content.length > 20) {
+        // Double check: if it's just the same character repeated, it's likely noise
+        const uniqueChars = new Set(content).size;
+        if (uniqueChars > 3) {
+            return `EXTRACTED_TEXT_PAYLOAD: "${content.substring(0, 40)}${content.length > 40 ? '...' : ''}"`;
+        }
     }
 
     return undefined;
@@ -269,13 +274,12 @@ export function analyzeStego(pixelData: number[] | Uint8Array): StegoAnalysisRes
 
     const isSuspicious =
         (payload !== undefined) ||
-        (prob > 0.99) ||
-        (prob > 0.90 && (rate_rs > 0.10 || rate_spa > 0.10)) ||
-        (rate_rs > 0.15 && rate_spa > 0.10) ||
-        (rate_rs > 0.25) ||
-        (rate_spa > 0.15 && prob > 0.75) ||
-        (bitCycle.detected && prob > 0.80) ||
-        lbp.detected ||
+        (prob > 0.999) || // Increased from 0.99
+        (prob > 0.95 && (rate_rs > 0.15 || rate_spa > 0.15)) || // Tightened
+        (rate_rs > 0.25 && rate_spa > 0.20) || // Tightened
+        (rate_rs > 0.35) ||
+        (bitCycle.detected && prob > 0.90) ||
+        (lbp.detected && prob > 0.85) || // LBP alone is not enough for suspicion
         noisePrint.suspicious;
         
     return { 

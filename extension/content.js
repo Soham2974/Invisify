@@ -1,4 +1,4 @@
-﻿
+
 /**
  * Sentinel Prime: Email Guard - Research-Grade Content Script
  * Advanced steganography detection with client-side fallback and ML UI
@@ -82,11 +82,32 @@ function detectHomoglyphDomains(text) {
     const urlRegex = /https?:\/\/([^\s/$.?#]+)/gi;
     const suspiciousDomains = [];
     const matches = text.matchAll(urlRegex);
+    const BRAND_PATTERNS = [
+        { name: 'paypal', regex: /p[a4]yp[a4][lI1]/i },
+        { name: 'microsoft', regex: /micr[o0]s[o0]ft/i },
+        { name: 'google', regex: /g[o0][o0]gle/i },
+        { name: 'facebook', regex: /f[a4]ceb[o0][o0]k/i },
+        { name: 'apple', regex: /[a4]pp[lI1]e/i }
+    ];
 
     for (const match of matches) {
-        const domain = match[1];
-        // Check for non-ASCII characters (potential punycode/homoglyphs)
+        const domain = match[1].toLowerCase();
+        let isSuspicious = false;
+
+        // Check for non-ASCII (Unicode Homoglyphs)
         if (/[^\x00-\x7F]/.test(domain)) {
+            isSuspicious = true;
+        } else {
+            // Check for ASCII Typosquatting
+            for (const brand of BRAND_PATTERNS) {
+                if (brand.regex.test(domain) && domain !== brand.name + '.com' && domain !== brand.name + '.net') {
+                    isSuspicious = true;
+                    break;
+                }
+            }
+        }
+
+        if (isSuspicious) {
             suspiciousDomains.push(domain);
         }
     }
@@ -138,16 +159,16 @@ function detectEmojiEncoding(text) {
     const emojiRegex = /\p{Extended_Pictographic}/gu;
     const emojis = text.match(emojiRegex) || [];
     if (emojis.length < 5) return { detected: false };
-    
+
     const unique = new Set(emojis).size;
     const totalChars = [...text].length;
     const emojiRatio = emojis.length / totalChars;
-    
+
     // High emoji density + power-of-2 alphabet = encoding signature
     const powersOfTwo = [2, 4, 8, 16, 32, 64, 128];
-    const isEncoding = (emojiRatio > 0.8 && emojis.length > 5) || 
-                       (powersOfTwo.includes(unique) && emojis.length > 20);
-    
+    const isEncoding = (emojiRatio > 0.8 && emojis.length > 5) ||
+        (powersOfTwo.includes(unique) && emojis.length > 20);
+
     return { detected: isEncoding, emojiCount: emojis.length, uniqueEmojis: unique };
 }
 
@@ -244,11 +265,13 @@ function comprehensiveClean(text) {
 // UI COMPONENTS
 // ============================================================================
 
-function injectToast(message, type = 'info', onClean = null) {
-    const existing = document.querySelector('.sentinel-toast');
+function injectToast(message, type = 'info', onClean = null, persistent = false) {
+    const toastId = 'sentinel-scan-toast';
+    const existing = document.getElementById(toastId);
     if (existing) existing.remove();
 
     const toast = document.createElement('div');
+    toast.id = toastId;
     toast.className = 'sentinel-toast';
 
     let bgColor = '#0369a1';
@@ -302,11 +325,13 @@ function injectToast(message, type = 'info', onClean = null) {
 
     document.body.appendChild(toast);
 
-    if (!onClean) {
+    if (!onClean && !persistent) {
         setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.5s';
-            setTimeout(() => toast.remove(), 500);
+            if (document.getElementById(toastId) === toast) {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(() => toast.remove(), 500);
+            }
         }, 4000);
     }
 }
@@ -350,7 +375,7 @@ function showThreatScoreMeter(result, isLocal = false) {
     meter.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <span style="font-weight: bold; font-size: 16px;">ðŸ›¡ï¸ Threat Analysis</span>
-            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #9ca3af;">Ã—</button>
+            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #9ca3af;">&times;</button>
         </div>
         
         <div style="margin-bottom: 16px;">
@@ -402,7 +427,8 @@ function showThreatScoreMeter(result, isLocal = false) {
 
 async function scanContent(text, images = []) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    console.log(`[Sentinel] Initiating scan for ${text.length} chars and ${images.length} images...`);
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout to allow for deep forensic analysis
 
     try {
         let response;
@@ -488,30 +514,67 @@ async function publishExtensionEvent(payload) {
 
 async function extractImagesFromContainer(container) {
     const extracted = [];
-    const imgEls = container.querySelectorAll('img');
+    // Find all images in the compose window (inline and attachments)
+    const imgEls = container.querySelectorAll('img, [role="listitem"] img, .aYz img');
+    const candidates = [];
+    
+    console.log(`[Sentinel] Found ${imgEls.length} potential image elements`);
     
     for (const img of imgEls) {
         try {
-            // Skip tracking pixels, UI icons, profile images
-            if (img.width < 20 || img.height < 20) continue;
+            const width = img.width || img.naturalWidth || img.clientWidth || 0;
+            const height = img.height || img.naturalHeight || img.clientHeight || 0;
+            
+            // Allow smaller thumbnails for attachments
+            if (width < 20 || height < 20) continue;
+            
             const src = img.src || img.dataset.src;
-            if (!src) continue;
-            if (src.includes('clearcache') || src.includes('mail.google.com/mail/u/')) {
-                // Often UI elements, skip unless it's a real attachment URL
-                if (!src.includes('disp=thd') && !src.includes('disp=inline') && !src.includes('ui=2')) continue;
+            if (!src || src.startsWith('data:image/svg')) continue;
+            
+            // Skip known UI icons and tracking pixels
+            if (src.includes('clearcache') || src.includes('gstatic.com') || src.includes('mail-icons')) continue;
+
+            candidates.push({ src, area: width * height });
+        } catch (e) {}
+    }
+
+    // Prioritize larger images (usually the content)
+    candidates.sort((a, b) => b.area - a.area);
+
+    // Try to fetch the top 5 candidates
+    for (const candidate of candidates.slice(0, 5)) {
+        try {
+            console.log(`[Sentinel] Extracting image: ${candidate.src.substring(0, 60)}...`);
+            
+            let blob;
+            // First try direct fetch (fastest)
+            try {
+                const response = await fetch(candidate.src, { credentials: 'include' });
+                if (response.ok) {
+                    blob = await response.blob();
+                }
+            } catch (err) {
+                console.log('[Sentinel] Direct fetch blocked by CORS, trying background fetch...');
             }
 
-            const response = await fetch(src);
-            const blob = await response.blob();
-            
-            if (blob.type.startsWith('image/') && blob.size > 1000) {
+            // Fallback to background fetch (CORS bypass)
+            if (!blob) {
+                const response = await chrome.runtime.sendMessage({ action: 'fetch_image', url: candidate.src });
+                if (response && response.success) {
+                    const res = await fetch(response.data);
+                    blob = await res.blob();
+                }
+            }
+
+            if (blob && blob.type.startsWith('image/') && blob.size > 1000) {
                 const ext = blob.type.split('/')[1] || 'png';
-                // Only take the first image to prevent overload/rate-limiting
                 extracted.push(new File([blob], `scanned_image.${ext}`, { type: blob.type }));
-                break; // Backend currently only processes one image per request
+                console.log(`[Sentinel] Successfully extracted image candidate: ${blob.size} bytes`);
+                // If it's a large image, it's likely the main one, we can stop here or continue for all
+                if (blob.size > 20000) break; 
             }
         } catch (e) {
-            console.warn('Sentinel: Failed to extract image from DOM:', e.message);
+            console.warn('Sentinel: Image extraction failed for candidate:', e.message);
         }
     }
     return extracted;
@@ -744,7 +807,9 @@ async function performSendScan(composeWindow) {
 
     if (!text && images.length === 0) return { allow: true };
 
-    injectToast(`Performing Security Scan (Images: ${images.length})...`);
+    const toastId = 'sentinel-scan-toast';
+    injectToast('\u{1F6E1}\u{FE0F} Performing Forensic Scan...', 'info', null, true);
+
     const outboundFingerprint = await sha256((text || '').slice(0, 500) + `:${images.length}`);
 
     const result = await scanContent(text, images);
@@ -763,12 +828,12 @@ async function performSendScan(composeWindow) {
             source: 'outbound',
         });
 
-        if (result.severity === 'Critical' || result.severity === 'High') {
+        if (result.severity === 'Critical' || result.severity === 'High' || result.score >= 85) {
             injectToast('CRITICAL: Send blocked!', 'danger');
-            alert('[SENTINEL PRIME] High-risk content detected!\n\n' + escapeHTML(result.reasons?.join('\n') || ''));
+            alert('[SENTINEL PRIME] High-risk content detected!\n\n' + (result.reasons?.join('\n') || 'Security anomaly detected'));
             return { allow: false, result };
-        } else if ((result.severity === 'Medium' || result.severity === 'Low') && result.score > 50) {
-            injectToast(`Warning: Suspicious (${result.score}%)`, 'warning');
+        } else if (result.score > 55) {
+            injectToast(`Warning: Suspicious Content (${result.score}%)`, 'warning');
             return { allow: true, result };
         } else {
             injectToast('Email verified clean.', 'info');
@@ -811,7 +876,7 @@ let sendInProgress = false;
 // Click interception
 document.addEventListener('click', async (e) => {
     if (sendInProgress) return;
-    
+
     const target = e.target.closest('[role="button"]');
     if (target && (target.innerText === 'Send' || target.getAttribute('aria-label')?.includes('Send'))) {
         const composeWindow = target.closest('.M9, [role="dialog"]');
@@ -824,13 +889,19 @@ document.addEventListener('click', async (e) => {
         const scanResult = await performSendScan(composeWindow);
 
         if (scanResult.allow) {
-            // Use sendInProgress flag to prevent re-triggering the scan on the re-dispatched click
             sendInProgress = true;
             try {
-                target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                console.log('[Sentinel] Scan complete. Proceeding with send in 500ms...');
+                // Small delay to allow Gmail's UI to settle
+                await new Promise(r => setTimeout(r, 500));
+                
+                if (typeof target.click === 'function') {
+                    target.click();
+                } else {
+                    target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                }
             } finally {
-                // Reset flag after the event has been dispatched and processed
-                setTimeout(() => { sendInProgress = false; }, 1000);
+                setTimeout(() => { sendInProgress = false; }, 3000);
             }
         }
     }
