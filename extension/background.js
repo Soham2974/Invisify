@@ -14,10 +14,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function fetchImageAsBase64(url) {
     try {
-        const response = await fetch(url);
+        const isGoogle = url.includes('google.com') || url.includes('googleusercontent.com');
+        const response = await fetch(url, { credentials: isGoogle ? 'include' : 'omit' });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const blob = await response.blob();
+        if (!blob.type.startsWith('image/')) {
+            throw new Error(`Fetched content is not an image. Type: ${blob.type}`);
+        }
+
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);

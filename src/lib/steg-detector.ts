@@ -27,8 +27,9 @@ export interface StegoAnalysisResult {
 
 export function chiSquareAttack(pixelData: number[] | Uint8Array): number {
     if (pixelData.length === 0) return 0;
+    const limit = Math.min(pixelData.length, 1000000);
     const frequencies = new Array(256).fill(0);
-    for (const pixel of pixelData) frequencies[pixel]++;
+    for (let i = 0; i < limit; i++) frequencies[pixelData[i]]++;
     let chiSquareSum = 0;
     let df = 0;
     for (let i = 0; i < 128; i++) {
@@ -58,8 +59,9 @@ export function chiSquareAttack(pixelData: number[] | Uint8Array): number {
 
 export function samplePairAnalysis(pixelData: number[] | Uint8Array): number {
     if (pixelData.length < 128) return 0;
+    const limit = Math.min(pixelData.length - 1, 1000000);
     let r0 = 0, s0 = 0, r1 = 0, s1 = 0;
-    for (let i = 0; i < pixelData.length - 1; i += 2) {
+    for (let i = 0; i < limit; i += 2) {
         const u = pixelData[i];
         const v = pixelData[i + 1];
         const isX = (v % 2 === 0 && u < v) || (v % 2 !== 0 && u > v);
@@ -88,29 +90,29 @@ export function rsAnalysis(pixelData: number[] | Uint8Array): number {
     if (pixelData.length < 256) return 0;
     const flip = (x: number) => (x % 2 === 0 ? x + 1 : x - 1);
     const invert = (x: number) => (x === 255 ? 254 : (x === 0 ? 1 : (x % 2 === 0 ? x - 1 : x + 1)));
-    const calculateF = (group: number[], m: number[]) => {
-        let score = 0;
-        const flipped = group.map((x, i) => {
-            if (m[i] === 1) return flip(x);
-            if (m[i] === -1) return invert(x);
-            return x;
-        });
-        for (let i = 0; i < flipped.length - 1; i++) score += Math.abs(flipped[i] - flipped[i + 1]);
-        return score;
-    };
+
     let Rm = 0, Sm = 0, R_m = 0, S_m = 0;
     const groupSize = 4;
-    const mask = [0, 1, 1, 0];
-    const inverseMask = [0, -1, -1, 0];
-    for (let i = 0; i <= pixelData.length - groupSize; i += groupSize) {
-        const group = Array.from(pixelData.slice(i, i + groupSize));
-        const f0 = calculateF(group, [0, 0, 0, 0]);
-        const fm = calculateF(group, mask);
+    const limit = Math.min(pixelData.length - groupSize, 1000000);
+    for (let i = 0; i <= limit; i += groupSize) {
+        const p0 = pixelData[i];
+        const p1 = pixelData[i + 1];
+        const p2 = pixelData[i + 2];
+        const p3 = pixelData[i + 3];
+
+        const f0 = Math.abs(p0 - p1) + Math.abs(p1 - p2) + Math.abs(p2 - p3);
+        
+        const m_p1 = flip(p1);
+        const m_p2 = flip(p2);
+        const fm = Math.abs(p0 - m_p1) + Math.abs(m_p1 - m_p2) + Math.abs(m_p2 - p3);
         if (fm > f0) Rm++; else if (fm < f0) Sm++;
-        const f_m = calculateF(group, inverseMask);
+
+        const im_p1 = invert(p1);
+        const im_p2 = invert(p2);
+        const f_m = Math.abs(p0 - im_p1) + Math.abs(im_p1 - im_p2) + Math.abs(im_p2 - p3);
         if (f_m > f0) R_m++; else if (f_m < f0) S_m++;
     }
-    const n = Math.floor(pixelData.length / groupSize);
+    const n = Math.floor((limit + groupSize) / groupSize);
     const d0 = (Rm - Sm) / n;
     const d1 = (R_m - S_m) / n;
     // Homogeneity check for RS: discard if groups are too uniform or too noisy
@@ -123,14 +125,14 @@ export function rsAnalysis(pixelData: number[] | Uint8Array): number {
 
 
 export function analyzeBitCycle(pixelData: number[] | Uint8Array): { detected: boolean; periodicity: number } {
-    const lsb = Array.from(pixelData, p => p & 1);
+    const limit = Math.min(pixelData.length, 500000);
     const maxLag = 32;
     const correlations: number[] = [];
     for (let lag = 1; lag <= maxLag; lag++) {
         let matches = 0;
         let trials = 0;
-        for (let i = 0; i < lsb.length - lag; i++) {
-            if (lsb[i] === lsb[i + lag]) matches++;
+        for (let i = 0; i < limit - lag; i++) {
+            if ((pixelData[i] & 1) === (pixelData[i + lag] & 1)) matches++;
             trials++;
         }
         correlations.push(matches / trials);
@@ -139,8 +141,8 @@ export function analyzeBitCycle(pixelData: number[] | Uint8Array): { detected: b
     for (let i = 0; i < correlations.length; i++) {
         if (correlations[i] > maxCorr) { maxCorr = correlations[i]; period = i + 1; }
     }
-    // Lowered threshold to 0.72 for higher sensitivity
-    return { detected: maxCorr > 0.72, periodicity: period };
+    // Reverted threshold to 0.85 to avoid false positives on safe images
+    return { detected: maxCorr > 0.85, periodicity: period };
 }
 
 export function analyzeNoiseFingerprint(pixelData: number[] | Uint8Array): { suspicious: boolean; varianceSpread: number } {
@@ -156,8 +158,8 @@ export function analyzeNoiseFingerprint(pixelData: number[] | Uint8Array): { sus
     }
     const max = Math.max(...variances), min = Math.min(...variances);
     const spread = max - min;
-    // Lowered thresholds for higher sensitivity
-    return { suspicious: spread > 0.18 && max > 0.22, varianceSpread: spread };
+    // Increased thresholds to avoid false positives on safe images
+    return { suspicious: spread > 0.35 && max > 0.40, varianceSpread: spread };
 }
 
 /**
@@ -166,21 +168,19 @@ export function analyzeNoiseFingerprint(pixelData: number[] | Uint8Array): { sus
  */
 export function analyzeLBP(pixelData: number[] | Uint8Array): { detected: boolean; variance: number } {
     if (pixelData.length < 1000) return { detected: false, variance: 0 };
-    const patterns: number[] = [];
-    const width = Math.floor(Math.sqrt(pixelData.length));
+    const limit = Math.min(pixelData.length - 1, 1000000);
+    const freq = new Array(4).fill(0);
     
     // Simple 1D LBP as proxy for 2D
-    for (let i = 1; i < pixelData.length - 1; i++) {
+    for (let i = 1; i < limit; i++) {
         let pattern = 0;
         if (pixelData[i-1] >= pixelData[i]) pattern |= 1;
         if (pixelData[i+1] >= pixelData[i]) pattern |= 2;
-        patterns.push(pattern);
+        freq[pattern]++;
     }
 
-    const freq = new Array(4).fill(0);
-    for (const p of patterns) freq[p]++;
-    const mean = patterns.length / 4;
-    const variance = freq.reduce((sum, f) => sum + Math.pow(f - mean, 2), 0) / patterns.length;
+    const mean = (limit - 1) / 4;
+    const variance = freq.reduce((sum, f) => sum + Math.pow(f - mean, 2), 0) / (limit - 1);
     
     // Natural images have high LBP variance. Stego embedding makes LBP more uniform.
     return { detected: variance < 0.1, variance };
@@ -275,9 +275,9 @@ export function analyzeStego(pixelData: number[] | Uint8Array): StegoAnalysisRes
     const isSuspicious =
         (payload !== undefined) ||
         (prob > 0.999) || // Increased from 0.99
-        (prob > 0.95 && (rate_rs > 0.15 || rate_spa > 0.15)) || // Tightened
-        (rate_rs > 0.25 && rate_spa > 0.20) || // Tightened
-        (rate_rs > 0.35) ||
+        (prob > 0.95 && (rate_rs > 0.25 || rate_spa > 0.25)) || // Tightened
+        (rate_rs > 0.35 && rate_spa > 0.30) || // Tightened
+        (rate_rs > 0.45) ||
         (bitCycle.detected && prob > 0.90) ||
         (lbp.detected && prob > 0.85) || // LBP alone is not enough for suspicion
         noisePrint.suspicious;

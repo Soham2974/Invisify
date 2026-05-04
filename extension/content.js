@@ -42,6 +42,37 @@ async function sha256(text) {
 // CLIENT-SIDE FORENSICS (Fallback Detection)
 // ============================================================================
 
+// Global Attachment Interceptor for Compose Window
+const pendingAttachments = new Map();
+
+document.addEventListener('change', (e) => {
+    if (e.target && e.target.type === 'file' && e.target.files && e.target.files.length > 0) {
+        const composeWindow = e.target.closest('.M9, [role="dialog"]') || document.body;
+        const composeId = composeWindow.id || 'default_compose';
+        if (!pendingAttachments.has(composeId)) pendingAttachments.set(composeId, []);
+        for (const file of e.target.files) {
+            if (file.type.startsWith('image/')) {
+                pendingAttachments.get(composeId).push(file);
+                console.log(`[Sentinel] Intercepted attachment via file input: ${file.name}`);
+            }
+        }
+    }
+}, true);
+
+document.addEventListener('drop', (e) => {
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const composeWindow = e.target.closest('.M9, [role="dialog"]') || document.body;
+        const composeId = composeWindow.id || 'default_compose';
+        if (!pendingAttachments.has(composeId)) pendingAttachments.set(composeId, []);
+        for (const file of e.dataTransfer.files) {
+            if (file.type.startsWith('image/')) {
+                pendingAttachments.get(composeId).push(file);
+                console.log(`[Sentinel] Intercepted attachment via drop: ${file.name}`);
+            }
+        }
+    }
+}, true);
+
 /**
  * Shannon Entropy Calculation
  * Natural text: ~3.5-5.0 bits/char
@@ -515,27 +546,57 @@ async function publishExtensionEvent(payload) {
 async function extractImagesFromContainer(container) {
     const extracted = [];
     // Find all images in the compose window (inline and attachments)
-    const imgEls = container.querySelectorAll('img, [role="listitem"] img, .aYz img');
+    const imgEls = container.querySelectorAll('img, [role="listitem"] img, .aYz img, .aQv img');
     const candidates = [];
     
     console.log(`[Sentinel] Found ${imgEls.length} potential image elements`);
     
     for (const img of imgEls) {
         try {
-            const width = img.width || img.naturalWidth || img.clientWidth || 0;
-            const height = img.height || img.naturalHeight || img.clientHeight || 0;
+            // Default to a valid size if not rendered yet to ensure we don't miss hidden attachments
+            const width = img.width || img.naturalWidth || img.clientWidth || 500;
+            const height = img.height || img.naturalHeight || img.clientHeight || 500;
             
-            // Allow smaller thumbnails for attachments
-            if (width < 20 || height < 20) continue;
+            // Ignore tiny thumbnails, focus on actual images
+            if (width < 30 || height < 30) continue;
             
-            const src = img.src || img.dataset.src;
+            let src = img.src || img.dataset.src;
             if (!src || src.startsWith('data:image/svg')) continue;
             
             // Skip known UI icons and tracking pixels
             if (src.includes('clearcache') || src.includes('gstatic.com') || src.includes('mail-icons')) continue;
 
+            // Gmail specific: always request the full-size original image (sz=s0) instead of the UI thumbnail.
+            // Thumbnails are re-encoded by Google and destroy LSB steganography!
+            if (src.includes('mail.google.com') && src.includes('sz=')) {
+                src = src.replace(/sz=[^&]+/, 'sz=s0'); 
+            }
+
             candidates.push({ src, area: width * height });
         } catch (e) {}
+    }
+
+    // Try to find direct attachment download links and convert them to image requests
+    const attachmentLinks = container.querySelectorAll('a[href*="view=att"], a[download]');
+    for (const link of attachmentLinks) {
+        if (link.href && link.href.includes('mail.google.com')) {
+            // Convert attachment view link to direct inline image fetch
+            let src = link.href.replace('disp=safe', 'disp=inline').replace('view=att', 'view=fimg');
+            if (!src.includes('sz=')) src += '&sz=s0';
+            candidates.push({ src: src, area: 9999999 }); // Prioritize actual attachments
+        } else if (link.href && !link.href.includes('mail.google.com')) {
+            candidates.push({ src: link.href, area: 9999998 });
+        }
+    }
+
+    // Add intercepted attachments
+    const composeId = container.id || 'default_compose';
+    if (pendingAttachments.has(composeId)) {
+        const files = pendingAttachments.get(composeId);
+        for (const file of files) {
+            extracted.push(file);
+            console.log(`[Sentinel] Adding intercepted attachment to scan: ${file.name}`);
+        }
     }
 
     // Prioritize larger images (usually the content)

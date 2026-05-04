@@ -82,7 +82,7 @@ export class DetectionEngine {
         let imageStrongSignals = 0;
         let imageHardEvidence = 0;
 
-        if (media_type === 'Text' || media_type === 'Emoji') {
+        if (text_in.length > 0) {
             // ==========================================
             // TIER 1: Deterministic Checks
             // ==========================================
@@ -138,11 +138,15 @@ export class DetectionEngine {
             const hasSpaces = text_in.includes(' ');
             const entropyVal = textResults.homoglyphs?.entropy?.score ?? 0;
             // FP Guardrail: High entropy alone on short strings (< 12 chars) is often just random IDs/passwords
-            const isEntropySuspicious = textResults.homoglyphs?.entropy?.suspicious && !hasSpaces && text_in.length >= 12;
+            // Also check individual words if there are spaces
+            const words = text_in.split(/\s+/).filter(w => w.length > 0);
+            const hasHighEntropyWord = words.some(w => w.length >= 12 && unicode.calculateShannonEntropy(w).score > 3.8);
+            
+            const isEntropySuspicious = (textResults.homoglyphs?.entropy?.suspicious && !hasSpaces && text_in.length >= 12) || hasHighEntropyWord;
             if (isEntropySuspicious) {
                 detectorsTriggered++;
                 score += WEIGHTS.ENTROPY_HIGH;
-                reasons.push(`high_character_entropy_detected_payload_risk (${entropyVal.toFixed(2)})`);
+                reasons.push(`high_character_entropy_detected_payload_risk`);
                 pValues.push(0.01);
             } else {
                 pValues.push(0.85);
@@ -153,8 +157,11 @@ export class DetectionEngine {
             const strictBase64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)$/.test(text_in);
             const entropy = textResults.homoglyphs?.entropy?.score ?? 0;
             const isHighDensityLong = /^[A-Za-z0-9+/=]{16,}$/.test(text_in) && !text_in.includes(' ') && entropy > 3.8;
+            
+            const hasUnpaddedBase64Word = words.some(w => /^[A-Za-z0-9+/]{16,}$/.test(w) && unicode.calculateShannonEntropy(w).score > 3.8);
             const isUnpaddedBase64 = /^[A-Za-z0-9+/]{16,}$/.test(text_in) && !text_in.includes(' ');
-            if ((strictBase64 && text_in.length >= 12) || isHighDensityLong || isUnpaddedBase64) {
+            
+            if ((strictBase64 && text_in.length >= 12) || isHighDensityLong || isUnpaddedBase64 || hasUnpaddedBase64Word) {
                 detectorsTriggered++;
                 score += WEIGHTS.BASE64_PAYLOAD;
                 reasons.push('obfuscated_or_base64_payload_detected');
@@ -220,10 +227,17 @@ export class DetectionEngine {
 
             // --- High-Entropy Random String Detection ---
             detectorsTotal++;
-            const isRandomString = !hasSpaces && text_in.length >= 15 &&
+            const hasRandomStringWord = words.some(w => 
+                w.length >= 15 && 
+                /[A-Za-z]/.test(w) && /[0-9]/.test(w) && 
+                /[!@#$%^&*()_+\-={}\[\]:;"'<>?,./\\|`~]/.test(w) &&
+                unicode.calculateShannonEntropy(w).score > 3.5
+            );
+            const isRandomString = (!hasSpaces && text_in.length >= 15 &&
                 /[A-Za-z]/.test(text_in) && /[0-9]/.test(text_in) &&
                 /[!@#$%^&*()_+\-={}\[\]:;"'<>?,./\\|`~]/.test(text_in) &&
-                entropy > 3.5;
+                entropy > 3.5) || hasRandomStringWord;
+                
             if (isRandomString) {
                 detectorsTriggered++;
                 score += WEIGHTS.RANDOM_STRING;
@@ -330,7 +344,11 @@ export class DetectionEngine {
                     findings.semantic_ai = { isSuspicious: false, reason: "AI unavailable", confidence: 0 };
                 }
             }
-        } else if (media_type === 'Image' && imageBuffer && pixels) {
+        }
+        
+        const textScore = score;
+        
+        if (imageBuffer && pixels) {
             // ==========================================
             // IMAGE ANALYSIS PIPELINE
             // ==========================================
@@ -358,13 +376,13 @@ export class DetectionEngine {
 
             // --- RS Analysis ---
             detectorsTotal++;
-            if (stego?.rsEmbeddingRate > 0.10) { // Lowered from 0.20
+            if (stego?.rsEmbeddingRate > 0.20) { // Lowered from 0.20, wait, reverting to 0.20 for safety
                 detectorsTriggered++;
                 imageStrongSignals++;
                 score += 25;
                 reasons.push(`rs_embedding_detected (rate=${stego.rsEmbeddingRate.toFixed(3)})`);
                 pValues.push(Math.max(0.001, 0.5 - stego.rsEmbeddingRate));
-            } else if (stego?.rsEmbeddingRate > 0.05) {
+            } else if (stego?.rsEmbeddingRate > 0.10) {
                 detectorsTriggered++;
                 score += 8;
                 reasons.push(`rs_embedding_low (rate=${stego.rsEmbeddingRate.toFixed(3)})`);
@@ -375,13 +393,13 @@ export class DetectionEngine {
 
             // --- Sample Pair Analysis ---
             detectorsTotal++;
-            if (stego?.spaEmbeddingRate > 0.10) { // Lowered from 0.20
+            if (stego?.spaEmbeddingRate > 0.20) { // Lowered from 0.20, wait, reverting to 0.20 for safety
                 detectorsTriggered++;
                 imageStrongSignals++;
                 score += 25;
                 reasons.push(`spa_embedding_detected (rate=${stego.spaEmbeddingRate.toFixed(3)})`);
                 pValues.push(Math.max(0.001, 0.5 - stego.spaEmbeddingRate));
-            } else if (stego?.spaEmbeddingRate > 0.05) {
+            } else if (stego?.spaEmbeddingRate > 0.10) {
                 detectorsTriggered++;
                 score += 8;
                 pValues.push(0.12);
@@ -507,20 +525,22 @@ export class DetectionEngine {
         // ==========================================
         // FINAL SCORING
         // ==========================================
-        let adjustedScore = score;
+        const imageScore = score - textScore;
+        let adjustedImageScore = imageScore;
 
         // Relaxed image gating: allow corroborated signals to reach High/Critical
-        if (media_type === 'Image') {
+        if (imageBuffer) {
             if (imageHardEvidence === 0 && imageStrongSignals === 0) {
-                adjustedScore = Math.min(adjustedScore, 24); // Up to Low
+                adjustedImageScore = Math.min(adjustedImageScore, 24); // Up to Low
             } else if (imageHardEvidence === 0 && imageStrongSignals === 1) {
-                adjustedScore = Math.min(adjustedScore, 49); // Up to Medium
+                adjustedImageScore = Math.min(adjustedImageScore, 49); // Up to Medium
             } else if (imageHardEvidence === 0 && imageStrongSignals === 2) {
-                adjustedScore = Math.min(adjustedScore, 79); // Up to High
+                adjustedImageScore = Math.min(adjustedImageScore, 79); // Up to High
             }
             // 3+ strong signals or hard evidence -> no cap.
         }
 
+        const adjustedScore = textScore + adjustedImageScore;
         const finalScore = Math.min(100, Math.max(0, adjustedScore));
 
         // Check for verified payloads

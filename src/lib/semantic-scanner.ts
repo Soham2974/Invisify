@@ -113,16 +113,21 @@ TEXT: ${sanitizedText}`,
             // Catch the result promise to prevent unhandled rejection if timeout fires
             const safeResult = resultPromise.catch(() => ({ output: null }));
 
-            const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('API Timeout')), 1200)
-            );
+            let timeoutReject: (reason?: any) => void;
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                timeoutReject = reject;
+                setTimeout(() => reject(new Error('API Timeout')), 1200);
+            });
 
             let output;
             try {
                 const res = await Promise.race([safeResult, timeoutPromise]) as any;
                 output = res?.output;
-            } catch {
+            } catch (e) {
                 output = null;
+            } finally {
+                // Prevent UnhandledPromiseRejection if timeoutPromise hasn't rejected yet
+                timeoutReject!(new Error('Cancelled')); 
             }
             clearTimeout(timeoutId);
             const result = output || fallback;
