@@ -3,6 +3,9 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone', // Required for Docker deployment
+  outputFileTracingIncludes: {
+    '/api/download-extension': ['./extension/**/*'],
+  },
   async redirects() {
     return [
       {
