@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import archiver from 'archiver';
-import { Readable } from 'stream';
 
 export async function GET() {
     try {
@@ -34,16 +33,13 @@ export async function GET() {
             archive.directory(iconsPath, 'icons');
         }
 
-        // Finalize the archive
-        archive.finalize();
-
-        // Convert archive to buffer
+        // Convert archive stream to a buffer before finalizing.
         const chunks: Buffer[] = [];
-        archive.on('data', (chunk: Buffer) => chunks.push(chunk));
-
         await new Promise<void>((resolve, reject) => {
+            archive.on('data', (chunk: Buffer) => chunks.push(chunk));
             archive.on('end', () => resolve());
             archive.on('error', (err: Error) => reject(err));
+            archive.finalize().catch(reject);
         });
 
         const buffer = Buffer.concat(chunks);
