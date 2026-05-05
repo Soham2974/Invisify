@@ -19,16 +19,22 @@ export async function GET() {
         // Add files to the archive
         const fs = require('fs');
         const path = require('path');
+        const primaryBaseDir = path.join(process.cwd(), 'public', 'extension');
+        const fallbackBaseDir = path.join(process.cwd(), 'extension');
+        const extensionBaseDir = fs.existsSync(primaryBaseDir) ? primaryBaseDir : fallbackBaseDir;
 
         extensionFiles.forEach(file => {
-            const filePath = path.join(process.cwd(), file.path);
+            const filePath = path.join(
+                extensionBaseDir,
+                path.basename(file.path)
+            );
             if (fs.existsSync(filePath)) {
                 archive.file(filePath, { name: file.name });
             }
         });
 
         // Add icons directory
-        const iconsPath = path.join(process.cwd(), 'extension/icons');
+        const iconsPath = path.join(extensionBaseDir, 'icons');
         if (fs.existsSync(iconsPath)) {
             archive.directory(iconsPath, 'icons');
         }
