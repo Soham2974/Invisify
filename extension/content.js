@@ -684,6 +684,33 @@ async function scanContent(text, images = [], retries = 2) {
     return null;
 }
 
+function formatThreatReasons(reasons = []) {
+    if (!Array.isArray(reasons) || reasons.length === 0) return ['Unknown detection'];
+    const map = {
+        'high_character_perplexity': 'Unusual character sequence (possible hidden encoding)',
+        'rs_embedding_detected': 'Statistical steganography signature detected',
+        'periodic_lsb_pattern': 'Periodic hidden data pattern in image',
+        'bit_plane_correlation_anomaly': 'Image pixel anomaly (possible hidden payload)',
+        'fisher_ensemble_confirmed': 'Multiple detection signals confirmed threat',
+        'zero_width': 'Invisible zero-width characters detected',
+        'zero_width_character': 'Invisible zero-width characters detected',
+        'homoglyph': 'Lookalike characters (homoglyph attack)',
+        'homoglyph_attack': 'Lookalike characters (homoglyph attack)',
+        'emoji_stego': 'Hidden data inside emoji characters',
+        'suspicious_link': 'Suspicious or deceptive link detected',
+        'base64_payload': 'Hidden Base64-encoded content detected',
+        'high_entropy': 'High randomness (possible encrypted payload)',
+        'unicode_confusable': 'Confusable Unicode characters detected',
+        'spoofed_domain': 'Domain spoofing attempt detected',
+        'qr_code_payload': 'QR code with suspicious payload',
+        'malicious_attachment': 'Potentially malicious attachment'
+    };
+    return reasons.map(r => {
+        const key = (r || '').toString().toLowerCase().replace(/\s*\(.*\)$/, '').trim();
+        return map[key] || r;
+    });
+}
+
 function getThreatTypeFromReasons(reasons = []) {
     const joined = reasons.join(' ').toLowerCase();
     if (joined.includes('homoglyph') || joined.includes('link')) return 'Homoglyph Phishing';
@@ -928,7 +955,8 @@ function injectInboundWarning(emailBody, result, isLocal) {
         gap: 16px;
     `;
 
-    let reasonsText = escapeHTML(Array.isArray(result.reasons) ? result.reasons.join(', ') : 'Unknown detection');
+    const displayReasons = formatThreatReasons(result.reasons || result.threats || []);
+    let reasonsText = escapeHTML(displayReasons.join(' • '));
 
     const infoDiv = document.createElement('div');
     infoDiv.innerHTML = `
@@ -1095,7 +1123,8 @@ async function performSendScan(composeWindow) {
 
         if (result.severity === 'Critical' || result.severity === 'High' || result.score >= 85) {
             injectToast('CRITICAL: Send blocked!', 'danger');
-            alert('[SENTINEL PRIME] High-risk content detected!\n\n' + (result.reasons?.join('\n') || 'Security anomaly detected'));
+            const readableReasons = formatThreatReasons(result.reasons || []).join('\n• ');
+            alert('[SENTINEL PRIME] High-risk content detected!\n\n• ' + (readableReasons || 'Security anomaly detected'));
             return { allow: false, result };
         } else if (result.score > 55) {
             injectToast(`Warning: Suspicious Content (${result.score}%)`, 'warning');
