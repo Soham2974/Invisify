@@ -1019,14 +1019,58 @@ const emailObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
             if (node.nodeType === 1) {
-                const emailBodies = getAllEmailBodies();
-                emailBodies.forEach(scanInboundEmail);
+                triggerInboundScan('mutation');
             }
         }
     }
 });
 
 emailObserver.observe(document.body, { childList: true, subtree: true });
+
+let inboundScanTimer = null;
+let lastInboundScanUrl = location.href;
+
+function triggerInboundScan(reason = 'manual', delayMs = 200) {
+    if (inboundScanTimer) clearTimeout(inboundScanTimer);
+    inboundScanTimer = setTimeout(() => {
+        inboundScanTimer = null;
+        const emailBodies = getAllEmailBodies();
+        emailBodies.forEach(scanInboundEmail);
+        console.log(`[Sentinel] Inbound scan triggered: ${reason} (${emailBodies.length} bodies)`);
+    }, delayMs);
+}
+
+function handleGmailRouteChange(reason) {
+    const nextUrl = location.href;
+    if (nextUrl === lastInboundScanUrl && reason !== 'startup') return;
+    lastInboundScanUrl = nextUrl;
+    triggerInboundScan(`route:${reason}`, 300);
+}
+
+function setupGmailNavigationHooks() {
+    const originalPushState = history.pushState;
+    history.pushState = function(...args) {
+        const result = originalPushState.apply(this, args);
+        handleGmailRouteChange('pushState');
+        return result;
+    };
+
+    const originalReplaceState = history.replaceState;
+    history.replaceState = function(...args) {
+        const result = originalReplaceState.apply(this, args);
+        handleGmailRouteChange('replaceState');
+        return result;
+    };
+
+    window.addEventListener('hashchange', () => handleGmailRouteChange('hashchange'));
+    window.addEventListener('popstate', () => handleGmailRouteChange('popstate'));
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') triggerInboundScan('visibility');
+    });
+    window.addEventListener('focus', () => triggerInboundScan('focus'));
+}
+
+setupGmailNavigationHooks();
 
 // Initial scan
 setTimeout(() => {
