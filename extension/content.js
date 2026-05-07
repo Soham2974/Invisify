@@ -17,27 +17,41 @@ console.log('[Sentinel] Research-Grade Email Guard Active');
 // API URL resolution: build-time placeholder -> chrome.storage -> localhost fallback
 let SCAN_API_URL = 'http://localhost:3000/api/scan';
 let EXTENSION_EVENTS_API_URL = 'http://localhost:3000/api/extension-events';
+let API_URL_RESOLVED = false;
 
 function resolveApiUrls() {
-    const buildTimeUrl = '__API_BASE_URL__';
-    if (buildTimeUrl && !buildTimeUrl.includes('__API_BASE_URL__')) {
-        SCAN_API_URL = buildTimeUrl + '/api/scan';
-        EXTENSION_EVENTS_API_URL = buildTimeUrl + '/api/extension-events';
-        return;
-    }
-    try {
-        chrome.storage.local.get(['apiBaseUrl'], (result) => {
-            if (result.apiBaseUrl) {
-                SCAN_API_URL = result.apiBaseUrl + '/api/scan';
-                EXTENSION_EVENTS_API_URL = result.apiBaseUrl + '/api/extension-events';
-                console.log('[Sentinel] Using API base URL from storage:', result.apiBaseUrl);
-            }
-        });
-    } catch (e) {
-        // storage unavailable, keep defaults
-    }
+    return new Promise((resolve) => {
+        const buildTimeUrl = '__API_BASE_URL__';
+        if (buildTimeUrl && !buildTimeUrl.includes('__API_BASE_URL__')) {
+            SCAN_API_URL = buildTimeUrl + '/api/scan';
+            EXTENSION_EVENTS_API_URL = buildTimeUrl + '/api/extension-events';
+            API_URL_RESOLVED = true;
+            console.log('[Sentinel] Using build-time API URL:', buildTimeUrl);
+            resolve();
+            return;
+        }
+        try {
+            chrome.storage.local.get(['apiBaseUrl'], (result) => {
+                if (result.apiBaseUrl) {
+                    SCAN_API_URL = result.apiBaseUrl + '/api/scan';
+                    EXTENSION_EVENTS_API_URL = result.apiBaseUrl + '/api/extension-events';
+                    console.log('[Sentinel] Using API base URL from storage:', result.apiBaseUrl);
+                } else {
+                    console.warn('[Sentinel] No API base URL configured. Falling back to localhost:3000. Set NEXT_PUBLIC_APP_URL at build time, or configure via popup.');
+                }
+                API_URL_RESOLVED = true;
+                resolve();
+            });
+        } catch (e) {
+            API_URL_RESOLVED = true;
+            console.warn('[Sentinel] chrome.storage unavailable, using localhost fallback');
+            resolve();
+        }
+    });
 }
-resolveApiUrls();
+
+// Run immediately but also expose promise for async waits
+const apiUrlsPromise = resolveApiUrls();
 
 const escapeHTML = (str) => {
     if (typeof str !== 'string') return '';
@@ -579,13 +593,29 @@ function showThreatScoreMeter(result, isLocal = false) {
 // API COMMUNICATION
 // ============================================================================
 
+function isMixedContent(apiUrl) {
+    try {
+        const apiProtocol = new URL(apiUrl).protocol;
+        const pageProtocol = window.location.protocol;
+        return pageProtocol === 'https:' && apiProtocol === 'http:';
+    } catch (e) {
+        return false;
+    }
+}
+
 async function scanContent(text, images = [], retries = 2) {
-    const controller = new AbortController();
-    const timeoutMs = images.length > 0 ? 20000 : 10000;
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    // Wait for API URLs to be resolved before scanning
+    if (!API_URL_RESOLVED) {
+        await apiUrlsPromise;
+    }
+
+    if (isMixedContent(SCAN_API_URL)) {
+        console.error(`[Sentinel] MIXED CONTENT BLOCKED: Cannot call HTTP API (${SCAN_API_URL}) from HTTPS page (${window.location.origin}). Set NEXT_PUBLIC_APP_URL to an HTTPS domain at build time, or configure via extension popup.`);
+        injectToast('API Error: Mixed Content. Configure API URL in popup.', 'danger');
+        return null;
+    }
 
     // For multi-image: scan the largest image only (backend only reads one image field).
-    // Remaining images are scanned client-side or noted in the payload.
     let primaryImage = null;
     if (images.length > 0) {
         const sized = images.map(img => ({
@@ -599,44 +629,55 @@ async function scanContent(text, images = [], retries = 2) {
         }
     }
 
-    const attempt = async () => {
-        let response;
-        if (primaryImage) {
-            const formData = new FormData();
-            formData.append('text', text || '');
-            formData.append('image', primaryImage);
-            response = await fetch(SCAN_API_URL, {
-                method: 'POST',
-                body: formData,
-                signal: controller.signal
-            });
-        } else {
-            response = await fetch(SCAN_API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: text || '' }),
-                signal: controller.signal
-            });
+    const attempt = async (attemptNum) => {
+        const controller = new AbortController();
+        const timeoutMs = images.length > 0 ? 20000 : 10000;
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            let response;
+            if (primaryImage) {
+                const formData = new FormData();
+                formData.append('text', text || '');
+                formData.append('image', primaryImage);
+                response = await fetch(SCAN_API_URL, {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+            } else {
+                response = await fetch(SCAN_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text || '' }),
+                    signal: controller.signal
+                });
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return await response.json();
+        } finally {
+            clearTimeout(timeoutId);
         }
-        clearTimeout(timeoutId);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        return await response.json();
     };
 
     for (let attemptNum = 0; attemptNum <= retries; attemptNum++) {
         try {
-            const result = await attempt();
+            const result = await attempt(attemptNum);
             console.log(`[Sentinel] API scan successful (attempt ${attemptNum + 1})`);
             return result;
         } catch (error) {
             const isLast = attemptNum === retries;
-            console.warn(`[Sentinel] API scan failed (attempt ${attemptNum + 1}/${retries + 1}):`, error?.name || error?.message || error);
+            const errMsg = error?.message || error?.name || String(error);
+            console.warn(`[Sentinel] API scan failed (attempt ${attemptNum + 1}/${retries + 1}): ${errMsg}`, error);
             if (isLast) {
+                if (errMsg.includes('Failed to fetch') || errMsg.includes('NetworkError')) {
+                    injectToast('API unreachable. Check API URL in extension popup.', 'danger');
+                }
                 return null;
             }
-            // Exponential backoff: 500ms, 1000ms
             await new Promise(r => setTimeout(r, 500 * (attemptNum + 1)));
         }
     }
@@ -675,6 +716,7 @@ function getInboundContext(emailBody) {
 }
 
 async function publishExtensionEvent(payload) {
+    if (isMixedContent(EXTENSION_EVENTS_API_URL)) return;
     try {
         await fetch(EXTENSION_EVENTS_API_URL, {
             method: 'POST',

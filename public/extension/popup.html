@@ -80,11 +80,49 @@
             border-radius: 6px;
             font-size: 14px;
             font-weight: 500;
-            margin-top: 20px;
+            margin-top: 12px;
             cursor: pointer;
             border: none;
         }
         .btn:hover { background: #0284c7; }
+        .btn-secondary {
+            background: #334155;
+        }
+        .btn-secondary:hover { background: #475569; }
+        .config-box {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            border: 1px solid #334155;
+        }
+        .config-box label {
+            font-size: 11px;
+            color: #94a3b8;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .config-box input {
+            width: 100%;
+            padding: 8px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+        .config-box input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+        }
+        .config-status {
+            font-size: 11px;
+            margin-top: 6px;
+            min-height: 16px;
+        }
+        .status-ok { color: #22c55e; }
+        .status-err { color: #ef4444; }
     </style>
 </head>
 <body>
@@ -92,17 +130,24 @@
         <div class="logo">S</div>
         <h1>Sentinel Prime</h1>
     </div>
-    
+
     <div class="status-box">
         <div class="status-title">System Status</div>
-        <div class="status-value">
+        <div class="status-value" id="systemStatus">
             <div class="pulse"></div>
             Email Guard Active
         </div>
     </div>
-    
+
     <div class="info">
-        INVISIFY Forensic Engine is monitoring your email composition. Hidden steganography and homoglyph attacks will be intercepted automatically.
+        INVISIFY Forensic Engine monitors your email composition. Hidden steganography and homoglyph attacks are intercepted automatically.
+    </div>
+
+    <div class="config-box">
+        <label for="apiUrl">API Base URL</label>
+        <input type="text" id="apiUrl" placeholder="https://your-app.vercel.app" />
+        <div class="config-status" id="configStatus"></div>
+        <button id="saveUrl" class="btn btn-secondary" style="margin-top:8px;">Save & Test</button>
     </div>
 
     <button id="checkNow" class="btn">Security Dashboard</button>
