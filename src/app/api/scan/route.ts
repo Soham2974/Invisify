@@ -120,10 +120,23 @@ export async function POST(req: NextRequest) {
       return res;
     }
 
+    // Validate text length
+    const MAX_TEXT_LENGTH = 50_000;
+    if (text && text.length > MAX_TEXT_LENGTH) {
+      const res = NextResponse.json(
+        { error: `Text too long. Maximum ${MAX_TEXT_LENGTH} characters.` },
+        { status: 413 }
+      );
+      res.headers.set('Access-Control-Allow-Origin', corsOrigin);
+      return res;
+    }
+
     const result = await performScan({ text, imageBuffer, mimeType });
     const res = NextResponse.json(result);
     res.headers.set('Access-Control-Allow-Origin', corsOrigin);
     res.headers.set('X-Content-Type-Options', 'nosniff');
+    res.headers.set('X-Frame-Options', 'DENY');
+    res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     return res;
   } catch (error: any) {
     console.error('API Scan Error:', error);
@@ -132,6 +145,7 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
     res.headers.set('Access-Control-Allow-Origin', corsOrigin);
+    res.headers.set('X-Content-Type-Options', 'nosniff');
     return res;
   }
 }

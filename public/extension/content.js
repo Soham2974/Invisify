@@ -12,10 +12,32 @@
  * - Threat score meter UI
  */
 
-console.log('ðŸ›¡ï¸ Sentinel Prime: Research-Grade Email Guard Active');
+console.log('[Sentinel] Research-Grade Email Guard Active');
 
-const SCAN_API_URL = 'http://localhost:3000/api/scan';
-const EXTENSION_EVENTS_API_URL = 'http://localhost:3000/api/extension-events';
+// API URL resolution: build-time placeholder -> chrome.storage -> localhost fallback
+let SCAN_API_URL = 'http://localhost:3000/api/scan';
+let EXTENSION_EVENTS_API_URL = 'http://localhost:3000/api/extension-events';
+
+function resolveApiUrls() {
+    const buildTimeUrl = '__API_BASE_URL__';
+    if (buildTimeUrl && !buildTimeUrl.includes('__API_BASE_URL__')) {
+        SCAN_API_URL = buildTimeUrl + '/api/scan';
+        EXTENSION_EVENTS_API_URL = buildTimeUrl + '/api/extension-events';
+        return;
+    }
+    try {
+        chrome.storage.local.get(['apiBaseUrl'], (result) => {
+            if (result.apiBaseUrl) {
+                SCAN_API_URL = result.apiBaseUrl + '/api/scan';
+                EXTENSION_EVENTS_API_URL = result.apiBaseUrl + '/api/extension-events';
+                console.log('[Sentinel] Using API base URL from storage:', result.apiBaseUrl);
+            }
+        });
+    } catch (e) {
+        // storage unavailable, keep defaults
+    }
+}
+resolveApiUrls();
 
 const escapeHTML = (str) => {
     if (typeof str !== 'string') return '';
@@ -42,33 +64,134 @@ async function sha256(text) {
 // CLIENT-SIDE FORENSICS (Fallback Detection)
 // ============================================================================
 
-// Global Attachment Interceptor for Compose Window
+// ============================================================================
+// ATTACHMENT INTERCEPTION SYSTEM (Sender-Side)
+// ============================================================================
+
+const ALLOWED_IMAGE_TYPES = [
+    'image/png',
+    'image/jpeg',
+    'image/jpg',
+    'image/webp',
+    'image/gif'
+];
+
+const IMAGE_TYPE_NAMES = {
+    'image/png': 'PNG',
+    'image/jpeg': 'JPEG',
+    'image/jpg': 'JPEG',
+    'image/webp': 'WebP',
+    'image/gif': 'GIF'
+};
+
+function normalizeMimeType(type) {
+    if (!type) return 'image/png';
+    const lower = String(type).toLowerCase().trim();
+    if (lower === 'image/jpg') return 'image/jpeg';
+    return lower;
+}
+
+function isAllowedImageType(type) {
+    return ALLOWED_IMAGE_TYPES.includes(normalizeMimeType(type));
+}
+
+// Robust unique compose ID generation
+let _composeIdCounter = 0;
+function getComposeId(composeWindow) {
+    if (!composeWindow) return 'default_compose';
+    if (composeWindow.dataset && composeWindow.dataset.sentinelComposeId) {
+        return composeWindow.dataset.sentinelComposeId;
+    }
+    const id = 'sentinel_compose_' + (++_composeIdCounter) + '_' + Math.random().toString(36).slice(2, 8);
+    composeWindow.dataset.sentinelComposeId = id;
+    return id;
+}
+
+// Attachment state: Map<composeId, Array<{file, scanned, result, error}>>
 const pendingAttachments = new Map();
+
+function getComposeAttachments(composeId) {
+    if (!pendingAttachments.has(composeId)) {
+        pendingAttachments.set(composeId, []);
+    }
+    return pendingAttachments.get(composeId);
+}
+
+function addAttachment(composeId, file) {
+    const list = getComposeAttachments(composeId);
+    const mime = normalizeMimeType(file.type);
+    if (!isAllowedImageType(mime)) {
+        console.log(`[Sentinel] Skipping non-whitelisted attachment: ${file.name} (${file.type})`);
+        return false;
+    }
+    // Deduplicate by name + size
+    const exists = list.some(a => a.file.name === file.name && a.file.size === file.size);
+    if (exists) {
+        console.log(`[Sentinel] Duplicate attachment skipped: ${file.name}`);
+        return false;
+    }
+    list.push({
+        file,
+        mime,
+        scanned: false,
+        result: null,
+        error: null,
+        id: Math.random().toString(36).slice(2, 10)
+    });
+    console.log(`[Sentinel] Intercepted attachment: ${file.name} (${IMAGE_TYPE_NAMES[mime] || mime}, ${file.size} bytes)`);
+    return true;
+}
+
+function findComposeWindowForInput(target) {
+    // Walk up DOM to find the Gmail compose container
+    let el = target;
+    while (el && el !== document.body) {
+        if (el.classList && (el.classList.contains('M9') || el.getAttribute('role') === 'dialog')) {
+            return el;
+        }
+        el = el.parentElement;
+    }
+    // Fallback: find the most recently active compose window
+    const allCompose = document.querySelectorAll('.M9, [role="dialog"]');
+    if (allCompose.length === 1) return allCompose[0];
+    // If multiple, try to find the one containing the focused element
+    const active = document.activeElement;
+    if (active) {
+        for (const win of allCompose) {
+            if (win.contains(active)) return win;
+        }
+    }
+    return allCompose[allCompose.length - 1] || document.body;
+}
 
 document.addEventListener('change', (e) => {
     if (e.target && e.target.type === 'file' && e.target.files && e.target.files.length > 0) {
-        const composeWindow = e.target.closest('.M9, [role="dialog"]') || document.body;
-        const composeId = composeWindow.id || 'default_compose';
-        if (!pendingAttachments.has(composeId)) pendingAttachments.set(composeId, []);
+        const composeWindow = findComposeWindowForInput(e.target);
+        const composeId = getComposeId(composeWindow);
         for (const file of e.target.files) {
-            if (file.type.startsWith('image/')) {
-                pendingAttachments.get(composeId).push(file);
-                console.log(`[Sentinel] Intercepted attachment via file input: ${file.name}`);
-            }
+            addAttachment(composeId, file);
         }
     }
 }, true);
 
 document.addEventListener('drop', (e) => {
     if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        const composeWindow = e.target.closest('.M9, [role="dialog"]') || document.body;
-        const composeId = composeWindow.id || 'default_compose';
-        if (!pendingAttachments.has(composeId)) pendingAttachments.set(composeId, []);
+        const composeWindow = findComposeWindowForInput(e.target);
+        const composeId = getComposeId(composeWindow);
         for (const file of e.dataTransfer.files) {
-            if (file.type.startsWith('image/')) {
-                pendingAttachments.get(composeId).push(file);
-                console.log(`[Sentinel] Intercepted attachment via drop: ${file.name}`);
-            }
+            addAttachment(composeId, file);
+        }
+    }
+}, true);
+
+// Also intercept paste events for inline images
+window.addEventListener('paste', (e) => {
+    if (!e.clipboardData || !e.clipboardData.files) return;
+    const composeWindow = findComposeWindowForInput(e.target);
+    const composeId = getComposeId(composeWindow);
+    for (const file of e.clipboardData.files) {
+        if (file.type && file.type.startsWith('image/')) {
+            addAttachment(composeId, file);
         }
     }
 }, true);
@@ -456,19 +579,32 @@ function showThreatScoreMeter(result, isLocal = false) {
 // API COMMUNICATION
 // ============================================================================
 
-async function scanContent(text, images = []) {
+async function scanContent(text, images = [], retries = 2) {
     const controller = new AbortController();
-    console.log(`[Sentinel] Initiating scan for ${text.length} chars and ${images.length} images...`);
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout to allow for deep forensic analysis
+    const timeoutMs = images.length > 0 ? 20000 : 10000;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
+    // For multi-image: scan the largest image only (backend only reads one image field).
+    // Remaining images are scanned client-side or noted in the payload.
+    let primaryImage = null;
+    if (images.length > 0) {
+        const sized = images.map(img => ({
+            img,
+            size: img.size || img.byteLength || 0
+        }));
+        sized.sort((a, b) => b.size - a.size);
+        primaryImage = sized[0].img;
+        if (images.length > 1) {
+            console.log(`[Sentinel] Scanning largest of ${images.length} images (${primaryImage.size || primaryImage.byteLength || '?'} bytes). Remaining images will be checked client-side.`);
+        }
+    }
+
+    const attempt = async () => {
         let response;
-        if (images.length > 0) {
+        if (primaryImage) {
             const formData = new FormData();
-            formData.append('text', text);
-            for (let i = 0; i < images.length; i++) {
-                formData.append('image', images[i]);
-            }
+            formData.append('text', text || '');
+            formData.append('image', primaryImage);
             response = await fetch(SCAN_API_URL, {
                 method: 'POST',
                 body: formData,
@@ -478,22 +614,33 @@ async function scanContent(text, images = []) {
             response = await fetch(SCAN_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text }),
+                body: JSON.stringify({ text: text || '' }),
                 signal: controller.signal
             });
         }
         clearTimeout(timeoutId);
         if (!response.ok) {
-            console.warn('ðŸ›¡ï¸ Sentinel API returned:', response.status);
-            return null; // Return null instead of throwing â€” callers handle fallback
+            throw new Error(`HTTP ${response.status}`);
         }
         return await response.json();
-    } catch (error) {
-        clearTimeout(timeoutId);
-        // Don't use console.error â€” Chrome logs these as extension errors
-        console.warn('ðŸ›¡ï¸ Sentinel: API unreachable, switching to local forensics.', error.name);
-        return null; // Return null â€” callers will fallback to local scanning
+    };
+
+    for (let attemptNum = 0; attemptNum <= retries; attemptNum++) {
+        try {
+            const result = await attempt();
+            console.log(`[Sentinel] API scan successful (attempt ${attemptNum + 1})`);
+            return result;
+        } catch (error) {
+            const isLast = attemptNum === retries;
+            console.warn(`[Sentinel] API scan failed (attempt ${attemptNum + 1}/${retries + 1}):`, error?.name || error?.message || error);
+            if (isLast) {
+                return null;
+            }
+            // Exponential backoff: 500ms, 1000ms
+            await new Promise(r => setTimeout(r, 500 * (attemptNum + 1)));
+        }
     }
+    return null;
 }
 
 function getThreatTypeFromReasons(reasons = []) {
@@ -545,99 +692,104 @@ async function publishExtensionEvent(payload) {
 
 async function extractImagesFromContainer(container) {
     const extracted = [];
-    // Find all images in the compose window (inline and attachments)
-    const imgEls = container.querySelectorAll('img, [role="listitem"] img, .aYz img, .aQv img');
-    const candidates = [];
-    
-    console.log(`[Sentinel] Found ${imgEls.length} potential image elements`);
-    
-    for (const img of imgEls) {
+    const composeId = getComposeId(container);
+
+    // ---- 1. Intercepted file attachments (sender-side compose) ----
+    const pending = getComposeAttachments(composeId);
+    if (pending.length > 0) {
+        for (const attachment of pending) {
+            extracted.push(attachment.file);
+            console.log(`[Sentinel] Queuing intercepted attachment for scan: ${attachment.file.name} (${attachment.mime})`);
+        }
+    }
+
+    // ---- 2. Inline images in the compose editor (paste, drag-drop inline) ----
+    // Gmail may render attached images as inline <img> elements with data URLs or blob URLs
+    const inlineImages = container.querySelectorAll('img, [data-image-src], .a11y img, .gmail_signature img');
+    for (const img of inlineImages) {
         try {
-            // Default to a valid size if not rendered yet to ensure we don't miss hidden attachments
-            const width = img.width || img.naturalWidth || img.clientWidth || 500;
-            const height = img.height || img.naturalHeight || img.clientHeight || 500;
-            
-            // Ignore tiny thumbnails, focus on actual images
-            if (width < 30 || height < 30) continue;
-            
-            let src = img.src || img.dataset.src;
-            if (!src || src.startsWith('data:image/svg')) continue;
-            
-            // Skip known UI icons and tracking pixels
+            let src = img.src || img.dataset?.imageSrc || img.getAttribute('data-image-src');
+            if (!src) continue;
+            if (src.startsWith('data:image/svg')) continue;
             if (src.includes('clearcache') || src.includes('gstatic.com') || src.includes('mail-icons')) continue;
 
-            // Gmail specific: always request the full-size original image (sz=s0) instead of the UI thumbnail.
-            // Thumbnails are re-encoded by Google and destroy LSB steganography!
-            if (src.includes('mail.google.com') && src.includes('sz=')) {
-                src = src.replace(/sz=[^&]+/, 'sz=s0'); 
+            const width = img.naturalWidth || img.width || img.clientWidth || 0;
+            const height = img.naturalHeight || img.height || img.clientHeight || 0;
+            if (width < 20 || height < 20) continue;
+
+            // data: URLs can be converted directly to Blobs
+            if (src.startsWith('data:image/')) {
+                try {
+                    const res = await fetch(src);
+                    const blob = await res.blob();
+                    if (blob.size > 500 && isAllowedImageType(blob.type)) {
+                        extracted.push(new File([blob], `inline_image.${blob.type.split('/')[1]}`, { type: blob.type }));
+                    }
+                } catch (e) {
+                    console.warn('[Sentinel] Failed to decode inline data URL:', e);
+                }
+                continue;
             }
 
-            candidates.push({ src, area: width * height });
-        } catch (e) {}
-    }
+            // blob: URLs (local browser objects) — not useful for scanning from container
+            if (src.startsWith('blob:')) continue;
 
-    // Try to find direct attachment download links and convert them to image requests
-    const attachmentLinks = container.querySelectorAll('a[href*="view=att"], a[download]');
-    for (const link of attachmentLinks) {
-        if (link.href && link.href.includes('mail.google.com')) {
-            // Convert attachment view link to direct inline image fetch
-            let src = link.href.replace('disp=safe', 'disp=inline').replace('view=att', 'view=fimg');
-            if (!src.includes('sz=')) src += '&sz=s0';
-            candidates.push({ src: src, area: 9999999 }); // Prioritize actual attachments
-        } else if (link.href && !link.href.includes('mail.google.com')) {
-            candidates.push({ src: link.href, area: 9999998 });
-        }
-    }
+            // External / Gmail-hosted images: try to fetch
+            if (src.includes('mail.google.com') && src.includes('sz=')) {
+                src = src.replace(/sz=[^&]+/, 'sz=s0');
+            }
 
-    // Add intercepted attachments
-    const composeId = container.id || 'default_compose';
-    if (pendingAttachments.has(composeId)) {
-        const files = pendingAttachments.get(composeId);
-        for (const file of files) {
-            extracted.push(file);
-            console.log(`[Sentinel] Adding intercepted attachment to scan: ${file.name}`);
-        }
-    }
-
-    // Prioritize larger images (usually the content)
-    candidates.sort((a, b) => b.area - a.area);
-
-    // Try to fetch the top 5 candidates
-    for (const candidate of candidates.slice(0, 5)) {
-        try {
-            console.log(`[Sentinel] Extracting image: ${candidate.src.substring(0, 60)}...`);
-            
-            let blob;
-            // First try direct fetch (fastest)
             try {
-                const response = await fetch(candidate.src, { credentials: 'include' });
+                const response = await fetch(src, { credentials: 'include' });
                 if (response.ok) {
-                    blob = await response.blob();
+                    const blob = await response.blob();
+                    if (blob.size > 1000 && isAllowedImageType(blob.type)) {
+                        extracted.push(new File([blob], `fetched_image.${blob.type.split('/')[1]}`, { type: blob.type }));
+                    }
                 }
             } catch (err) {
-                console.log('[Sentinel] Direct fetch blocked by CORS, trying background fetch...');
-            }
-
-            // Fallback to background fetch (CORS bypass)
-            if (!blob) {
-                const response = await chrome.runtime.sendMessage({ action: 'fetch_image', url: candidate.src });
-                if (response && response.success) {
-                    const res = await fetch(response.data);
-                    blob = await res.blob();
+                // CORS blocked — try background script bypass
+                try {
+                    const bgResponse = await chrome.runtime.sendMessage({ action: 'fetch_image', url: src });
+                    if (bgResponse && bgResponse.success) {
+                        const res = await fetch(bgResponse.data);
+                        const blob = await res.blob();
+                        if (blob.size > 1000 && isAllowedImageType(blob.type)) {
+                            extracted.push(new File([blob], `bg_fetched_image.${blob.type.split('/')[1]}`, { type: blob.type }));
+                        }
+                    }
+                } catch (bgErr) {
+                    console.warn('[Sentinel] Background fetch also failed for:', src.substring(0, 60));
                 }
             }
-
-            if (blob && blob.type.startsWith('image/') && blob.size > 1000) {
-                const ext = blob.type.split('/')[1] || 'png';
-                extracted.push(new File([blob], `scanned_image.${ext}`, { type: blob.type }));
-                console.log(`[Sentinel] Successfully extracted image candidate: ${blob.size} bytes`);
-                // If it's a large image, it's likely the main one, we can stop here or continue for all
-                if (blob.size > 20000) break; 
-            }
         } catch (e) {
-            console.warn('Sentinel: Image extraction failed for candidate:', e.message);
+            console.warn('[Sentinel] Inline image extraction error:', e);
         }
     }
+
+    // ---- 3. Attachment chip links (for receiver-side / read email) ----
+    const attachmentLinks = container.querySelectorAll('a[href*="view=att"], a[download]');
+    for (const link of attachmentLinks) {
+        if (!link.href) continue;
+        try {
+            let src = link.href;
+            if (src.includes('mail.google.com')) {
+                src = src.replace('disp=safe', 'disp=inline').replace('view=att', 'view=fimg');
+                if (!src.includes('sz=')) src += '&sz=s0';
+            }
+            const response = await fetch(src, { credentials: 'include' });
+            if (response.ok) {
+                const blob = await response.blob();
+                if (blob.size > 1000 && isAllowedImageType(blob.type)) {
+                    extracted.push(new File([blob], `attachment_image.${blob.type.split('/')[1]}`, { type: blob.type }));
+                }
+            }
+        } catch (e) {
+            console.warn('[Sentinel] Attachment link fetch failed:', e);
+        }
+    }
+
+    console.log(`[Sentinel] extractImagesFromContainer: ${extracted.length} image(s) found (${pending.length} pending attachments + ${extracted.length - pending.length} inline/fetched)`);
     return extracted;
 }
 
@@ -864,16 +1016,21 @@ composeWindowObserver.observe(document.body, { childList: true, subtree: true })
 async function performSendScan(composeWindow) {
     const editor = composeWindow.querySelector('[role="textbox"][g_editable="true"]');
     const text = editor ? (editor.innerText || editor.textContent || '') : '';
+    const composeId = getComposeId(composeWindow);
+
+    injectToast('\u{1F6E1}\u{FE0F} Scanning email for threats...', 'info', null, true);
+
+    // Extract images from intercepted attachments + inline elements
     const images = await extractImagesFromContainer(composeWindow);
 
-    if (!text && images.length === 0) return { allow: true };
+    console.log(`[Sentinel] performSendScan: composeId=${composeId}, text=${text.length} chars, images=${images.length}`);
 
-    const toastId = 'sentinel-scan-toast';
-    injectToast('\u{1F6E1}\u{FE0F} Performing Forensic Scan...', 'info', null, true);
+    if (!text && images.length === 0) return { allow: true };
 
     const outboundFingerprint = await sha256((text || '').slice(0, 500) + `:${images.length}`);
 
     const result = await scanContent(text, images);
+
     if (result) {
         showThreatScoreMeter(result, false);
 
@@ -888,6 +1045,11 @@ async function performSendScan(composeWindow) {
             fingerprint: outboundFingerprint.slice(0, 16),
             source: 'outbound',
         });
+
+        // Clear scanned attachments for this compose window to prevent memory leaks
+        if (pendingAttachments.has(composeId)) {
+            pendingAttachments.delete(composeId);
+        }
 
         if (result.severity === 'Critical' || result.severity === 'High' || result.score >= 85) {
             injectToast('CRITICAL: Send blocked!', 'danger');
@@ -918,6 +1080,11 @@ async function performSendScan(composeWindow) {
             source: 'outbound',
         });
 
+        // Clear attachments even on API failure
+        if (pendingAttachments.has(composeId)) {
+            pendingAttachments.delete(composeId);
+        }
+
         if (localResult.score > 70) {
             injectToast('CRITICAL: Send blocked (Local)', 'danger');
             alert('[SENTINEL PRIME - Local Mode] High-risk content!\n\n' + localResult.threats.join('\n'));
@@ -939,42 +1106,57 @@ document.addEventListener('click', async (e) => {
     if (sendInProgress) return;
 
     const target = e.target.closest('[role="button"]');
-    if (target && (target.innerText === 'Send' || target.getAttribute('aria-label')?.includes('Send'))) {
-        const composeWindow = target.closest('.M9, [role="dialog"]');
-        if (!composeWindow) return;
+    if (!target) return;
 
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
+    // Skip if this is our own programmatic re-trigger
+    if (target.dataset.sentinelTriggered === 'true') return;
 
-        const scanResult = await performSendScan(composeWindow);
+    const isSendBtn = (
+        target.innerText === 'Send' ||
+        target.getAttribute('aria-label')?.includes('Send') ||
+        target.dataset.tooltip?.includes('Send')
+    );
+    if (!isSendBtn) return;
 
-        if (scanResult.allow) {
-            sendInProgress = true;
+    const composeWindow = target.closest('.M9, [role="dialog"]');
+    if (!composeWindow) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    const scanResult = await performSendScan(composeWindow);
+
+    if (scanResult.allow) {
+        sendInProgress = true;
+        try {
+            console.log('[Sentinel] Scan complete. Proceeding with send...');
+            await new Promise(r => setTimeout(r, 300));
+
+            // Mark element so our listener skips it
+            target.dataset.sentinelTriggered = 'true';
             try {
-                console.log('[Sentinel] Scan complete. Proceeding with send in 500ms...');
-                // Small delay to allow Gmail's UI to settle
-                await new Promise(r => setTimeout(r, 500));
-                
                 if (typeof target.click === 'function') {
                     target.click();
                 } else {
                     target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
                 }
             } finally {
-                setTimeout(() => { sendInProgress = false; }, 3000);
+                delete target.dataset.sentinelTriggered;
             }
+        } finally {
+            setTimeout(() => { sendInProgress = false; }, 3000);
         }
     }
 }, true);
 
 // Keyboard interception (Ctrl+Enter / Cmd+Enter)
 document.addEventListener('keydown', async (e) => {
+    if (sendInProgress) return;
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         const composeWindow = e.target.closest('.M9, [role="dialog"]');
         if (!composeWindow) return;
 
-        // Check if we're in a compose window
         const editor = composeWindow.querySelector('[role="textbox"][g_editable="true"]');
         if (!editor) return;
 
@@ -985,10 +1167,15 @@ document.addEventListener('keydown', async (e) => {
         const scanResult = await performSendScan(composeWindow);
 
         if (scanResult.allow) {
-            // Simulate send button click
-            const sendBtn = composeWindow.querySelector('[role="button"]');
-            if (sendBtn && (sendBtn.innerText === 'Send' || sendBtn.getAttribute('aria-label')?.includes('Send'))) {
-                setTimeout(() => sendBtn.click(), 100);
+            // Find the actual Send button and trigger it (which will go through our click interceptor)
+            const sendBtn = composeWindow.querySelector('[role="button"][data-tooltip*="Send"], [role="button"][aria-label*="Send"]');
+            if (sendBtn) {
+                sendBtn.click();
+            } else {
+                // Fallback: dispatch Enter key on editor
+                editor.dispatchEvent(new KeyboardEvent('keydown', {
+                    key: 'Enter', bubbles: true, cancelable: true, ctrlKey: e.ctrlKey, metaKey: e.metaKey
+                }));
             }
         }
     }
