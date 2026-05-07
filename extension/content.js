@@ -542,7 +542,7 @@ function showThreatScoreMeter(result, isLocal = false) {
 
     meter.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="font-weight: bold; font-size: 16px;">ðŸ›¡ï¸ Threat Analysis</span>
+            <span style="font-weight: bold; font-size: 16px;">🛡️ Threat Analysis</span>
             <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #9ca3af;">&times;</button>
         </div>
         
@@ -559,7 +559,7 @@ function showThreatScoreMeter(result, isLocal = false) {
         <div style="margin-bottom: 12px;">
             <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #6b7280;">Detection Method</div>
             <div style="font-size: 13px; background: ${isLocal ? '#fef3c7' : '#dbeafe'}; padding: 6px 10px; border-radius: 6px;">
-                ${isLocal ? 'âš¡ Local Forensics' : 'ðŸŒ API + Local'}
+                ${isLocal ? '⚡ Local Forensics' : '🌐 API + Local'}
             </div>
         </div>
         
@@ -574,7 +574,7 @@ function showThreatScoreMeter(result, isLocal = false) {
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
             <div style="font-size: 11px; color: #6b7280;">
                 Entropy: <strong>${result.entropy.toFixed(2)}</strong> bits/char
-                ${result.entropy > 5.5 ? 'âš ï¸' : 'âœ“'}
+                ${result.entropy > 5.5 ? '⚠️' : '✅'}
             </div>
         </div>
         ` : ''}
@@ -961,7 +961,7 @@ function injectInboundWarning(emailBody, result, isLocal) {
     const infoDiv = document.createElement('div');
     infoDiv.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 4px;">
-            <span>${isHighRisk ? 'ðŸš¨ SECURITY ALERT' : 'âš ï¸ SECURITY WARNING'}</span>
+            <span>${isHighRisk ? '🚨 SECURITY ALERT' : '⚠️ SECURITY WARNING'}</span>
             ${isLocal ? '<span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 3px;">LOCAL</span>' : ''}
         </div>
         <div style="font-size: 14px;">
@@ -1030,7 +1030,7 @@ emailObserver.observe(document.body, { childList: true, subtree: true });
 
 // Initial scan
 setTimeout(() => {
-    console.log('ðŸ›¡ï¸ Sentinel Prime: Initial scan...');
+    console.log('🛡️ Sentinel Prime: Initial scan...');
     getAllEmailBodies().forEach(scanInboundEmail);
 }, 4000);
 
@@ -1252,7 +1252,8 @@ document.addEventListener('keydown', async (e) => {
     }
 }, true);
 
-console.log('âœ… Sentinel Prime: Research-grade protection active');
+console.log('✅ Sentinel Prime: Research-grade protection active');
+
 
 
 
